@@ -33,7 +33,7 @@ return {
             completion = { callSnippet = 'Replace' },
             workspace = {
               checkThirdParty = false,
-              library = { vim.fn.stdpath('config') .. '/lua' }
+              library = { vim.fn.stdpath('config') .. '/lua' },
             },
           },
         },
@@ -134,19 +134,54 @@ return {
         capabilities = capabilities,
         settings = {
           gopls = {
-            -- Settings based on common Zed/VSCode Go setups
             completeUnimported = true,
             usePlaceholders = true,
-            staticcheck = true,
+            staticcheck = false, -- Disable gopls staticcheck, let golangci-lint handle it
             semanticTokens = true,
-            -- Enable all inlay hints for a richer experience
-            ["ui.inlayhint.hints"] = {
+            analyses = {
+              unusedparams = true,
+              shadow = false,
+              nilness = true,
+              unusedwrite = true,
+            },
+            codelenses = {
+              generate = true,
+              gc_details = true,
+              test = true,
+              tidy = true,
+              upgrade_dependency = true,
+            },
+            hints = {
+              assignVariableTypes = true,
               compositeLiteralFields = true,
+              compositeLiteralTypes = true,
               constantValues = true,
+              functionTypeParameters = true,
               parameterNames = true,
               rangeVariableTypes = true,
-              functionTypeParameters = true,
             },
+          },
+        },
+      })
+
+      -- golangci-lint Language Server
+      vim.lsp.config('golangci_lint_ls', {
+        cmd = { 'golangci-lint-langserver' },
+        filetypes = { 'go' },
+        root_markers = { 'go.mod', '.golangci.yml', '.golangci.yaml', '.git' },
+        capabilities = capabilities,
+        init_options = {
+          command = {
+            'golangci-lint',
+            'run',
+            '--config',
+            '.golangci.yaml',
+            '--output.text.path',
+            '/dev/null',
+            '--output.json.path',
+            'stdout',
+            '--show-stats=false',
+            '--issues-exit-code=1',
           },
         },
       })
@@ -154,24 +189,28 @@ return {
       -- --------------------------------------------------------------------------
       -- 2. Setup Mason-LSPConfig with automatic_enable
       -- --------------------------------------------------------------------------
-      -- This will automatically enable all servers configured above via vim.lsp.config()
       require('mason-lspconfig').setup({
         ensure_installed = {
           'html', 'cssls', 'jsonls', 'ts_ls',
           'lua_ls', 'pyright', 'bashls', 'rust_analyzer', 'ruby_lsp',
-          'gopls' -- Added Go LSP
+          'gopls',
+          'golangci_lint_ls', -- Added golangci-lint LSP
         },
-        automatic_enable = true, -- Automatically enable servers configured with vim.lsp.config()
+        automatic_enable = true,
       })
 
       -- --------------------------------------------------------------------------
-      -- 3. Diagnostics Configuration
+      -- 3. Diagnostics Configuration (Default Formatter)
       -- --------------------------------------------------------------------------
-      vim.diagnostic.config({
+
+      -- This is the config table we want to apply.
+      -- The custom `format` function has been removed from `virtual_text`.
+      local diagnostic_config = {
         virtual_text = {
           source = 'always',
           spacing = 4,
           prefix = '●',
+          -- NO format function here, so Neovim uses its default
         },
         signs = true,
         update_in_insert = false,
@@ -179,7 +218,38 @@ return {
         float = {
           source = 'always',
           border = 'rounded',
+          wrap = true,
+          max_width = 120,
+          max_height = 30,
+          focusable = true,
+          header = '',
+          prefix = '',
         },
+      }
+
+      -- Wrap in vim.schedule() to ensure this config is applied *last*,
+      -- overriding any defaults set by other plugins.
+      vim.schedule(function()
+        vim.diagnostic.config(diagnostic_config)
+      end)
+
+      -- Set updatetime for better responsiveness
+      vim.opt.updatetime = 300
+
+      -- Auto-show full diagnostic on cursor hold
+      vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+        group = vim.api.nvim_create_augroup('float_diagnostic', { clear = true }),
+        callback = function()
+          vim.diagnostic.open_float(nil, {
+            focus = false,
+            close_events = { 'BufLeave', 'CursorMoved', 'InsertEnter', 'FocusLost' },
+            border = 'rounded',
+            source = 'always',
+            prefix = ' ',
+            scope = 'cursor',
+            header = '',
+          })
+        end,
       })
 
       -- --------------------------------------------------------------------------
@@ -200,12 +270,40 @@ return {
         vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, vim.tbl_extend('force', base_opts, { desc = 'Go to previous diagnostic' }))
         vim.keymap.set('n', ']d', vim.diagnostic.goto_next, vim.tbl_extend('force', base_opts, { desc = 'Go to next diagnostic' }))
         vim.keymap.set('n', '<leader>vd', vim.diagnostic.open_float, vim.tbl_extend('force', base_opts, { desc = 'View Diagnostic' }))
+
+        -- Quick diagnostic view with 'gl' (go lint)
+        vim.keymap.set('n', 'gl', function()
+          vim.diagnostic.open_float(nil, {
+            border = 'rounded',
+            source = 'always',
+            wrap = true,
+            max_width = 120,
+          })
+        end, vim.tbl_extend('force', base_opts, { desc = 'Show line diagnostics' }))
+
+        -- Additional diagnostic keymaps
+        vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, vim.tbl_extend('force', base_opts, { desc = 'Diagnostic [Q]uickfix' }))
+        vim.keymap.set('n', '<leader>Q', vim.diagnostic.setqflist, vim.tbl_extend('force', base_opts, { desc = 'All Diagnostics [Q]uickfix' }))
+        
+        -- Toggle virtual text on/off
+        vim.keymap.set('n', '<leader>td', function()
+          local current_config = vim.diagnostic.config()
+          local is_enabled = current_config.virtual_text ~= false
+          
+          -- This toggle now re-uses the `virtual_text` table from our
+          -- main `diagnostic_config`, which no longer has a format function.
+          vim.diagnostic.config({
+            virtual_text = not is_enabled and diagnostic_config.virtual_text or false,
+          })
+          
+          vim.notify('Virtual text: ' .. (not is_enabled and 'ON' or 'OFF'), vim.log.levels.INFO)
+        end, vim.tbl_extend('force', base_opts, { desc = '[T]oggle [D]iagnostic virtual text' }))
       end
 
       local lsp_filetypes = {
         'ruby', 'eruby', 'lua', 'html', 'css', 'json',
         'typescript', 'javascript', 'python', 'bash', 'rust',
-        'go', 'gomod', 'gowork', 'gotmpl' -- Added Go filetypes
+        'go', 'gomod', 'gowork', 'gotmpl',
       }
 
       vim.api.nvim_create_autocmd('FileType', {
@@ -219,12 +317,10 @@ return {
       -- --------------------------------------------------------------------------
       local RUBOCOP_PATH = '/Users/kamalesh.s/.rbenv/shims/rubocop'
 
-      -- Check if rubocop exists
       local function rubocop_exists()
         return vim.fn.executable(RUBOCOP_PATH) == 1 or vim.fn.executable('rubocop') == 1
       end
 
-      -- Get rubocop command
       local function get_rubocop_cmd()
         if vim.fn.executable(RUBOCOP_PATH) == 1 then
           return RUBOCOP_PATH
@@ -246,21 +342,42 @@ return {
           local rubocop_cmd = get_rubocop_cmd()
           local file_path = vim.api.nvim_buf_get_name(args.buf)
 
-          -- Skip if file doesn't exist or is empty
           if file_path == '' or vim.fn.filereadable(file_path) == 0 then
             return
           end
 
-          -- Run rubocop with autocorrect
           local cmd = string.format('%s -A %s', rubocop_cmd, vim.fn.shellescape(file_path))
           local output = vim.fn.system(cmd)
           local exit_code = vim.v.shell_error
 
-          -- Reload buffer if rubocop made changes
-          if exit_code == 0 or exit_code == 1 then -- 0 = no offenses, 1 = offenses corrected
-            vim.cmd('checktime') -- Check if file changed and reload if needed
+          if exit_code == 0 or exit_code == 1 then
+            vim.cmd('checktime')
           else
             vim.notify('RuboCop failed: ' .. output, vim.log.levels.ERROR)
+          end
+        end,
+      })
+
+      -- --------------------------------------------------------------------------
+      -- 6. Go Auto-format and Organize Imports on Save
+      -- --------------------------------------------------------------------------
+      vim.api.nvim_create_autocmd('BufWritePre', {
+        pattern = { '*.go' },
+        group = vim.api.nvim_create_augroup('GoFormatting', { clear = true }),
+        callback = function()
+          -- Format with gopls
+          vim.lsp.buf.format({ timeout_ms = 3000 })
+
+          -- Organize imports
+          local params = vim.lsp.util.make_range_params()
+          params.context = { only = { 'source.organizeImports' } }
+          local result = vim.lsp.buf_request_sync(0, 'textDocument/codeAction', params, 3000)
+          for _, res in pairs(result or {}) do
+            for _, r in pairs(res.result or {}) do
+              if r.edit then
+                vim.lsp.util.apply_workspace_edit(r.edit, 'utf-8')
+              end
+            end
           end
         end,
       })
@@ -277,7 +394,7 @@ return {
       ensure_installed = {
         'lua', 'html', 'css', 'javascript', 'typescript', 'json',
         'bash', 'python', 'rust', 'ruby', 'erb',
-        'go', 'gomod' -- Added Go parsers
+        'go', 'gomod',
       },
       highlight = { enable = true },
       indent = { enable = true },
@@ -295,4 +412,3 @@ return {
   -- The nvim-cmp setup file
   { 'hrsh7th/nvim-cmp', lazy = false, config = require('plugins.nvim-cmp') },
 }
-

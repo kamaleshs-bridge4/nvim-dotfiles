@@ -72,6 +72,14 @@ return {
     view = {
       width = 30,
       preserve_window_proportions = true,
+      -- Rounded borders for modern aesthetic
+      float = {
+        enable = false,
+        quit_on_focus_loss = true,
+        open_win_config = {
+          border = "rounded",
+        },
+      },
     },
     actions = {
       open_file = {
