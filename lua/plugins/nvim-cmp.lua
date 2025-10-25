@@ -17,18 +17,20 @@ return {
   config = function()
     local cmp = require('cmp')
     local luasnip = require('luasnip')
+    local lspkind = require('lspkind') -- Make sure lspkind is required
 
     -- IMPORTANT: Load friendly snippets if available
     require('luasnip.loaders.from_vscode').lazy_load()
-    
+
     cmp.setup({
       -- -----------------------------------------------------------
-      -- 1. MAPPING CONFIGURATION (UNCHANGED - already excellent)
+      -- 1. MAPPING CONFIGURATION
       -- -----------------------------------------------------------
       mapping = cmp.mapping.preset.insert({
-        ['<C-n>'] = cmp.mapping.select_next_item(),
-        ['<C-p>'] = cmp.mapping.select_prev_item(),
-        ['<C-y>'] = cmp.mapping.confirm({ select = true }),
+        ['<C-n>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+        ['<C-p>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+        ['<C-y>'] = cmp.mapping.confirm({ select = true }), -- Confirm with Ctrl-y
+        ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Or confirm with Enter
         ['<Tab>'] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_next_item()
@@ -50,7 +52,7 @@ return {
       }),
 
       -- -----------------------------------------------------------
-      -- 2. SOURCES (UNCHANGED - order is fine)
+      -- 2. SOURCES
       -- -----------------------------------------------------------
       sources = cmp.config.sources({
         { name = 'nvim_lsp' },
@@ -60,15 +62,15 @@ return {
       }),
 
       -- -----------------------------------------------------------
-      -- 3. APPEARANCE AND FORMATTING (Aesthetic Tweaks)
+      -- 3. APPEARANCE AND FORMATTING
       -- -----------------------------------------------------------
       formatting = {
-        format = require('lspkind').cmp_format({
+        format = lspkind.cmp_format({ -- Use lspkind here
           -- Use a more minimal symbol mode
           mode = 'symbol_text', -- Show both symbol icon and text
           maxwidth = 50,
           ellipsis_char = '...',
-          
+
           -- Optional: Add a subtle separator between the icon and the label
           menu = ({
             buffer = '[Buf]',
@@ -79,13 +81,16 @@ return {
           }),
         }),
       },
-      
+
       -- 4. WINDOW CUSTOMIZATION (Rounded Borders for Softer Look)
       window = {
         -- Use rounded borders for a modern, softer appearance
         completion = cmp.config.window.bordered({
           border = 'rounded',
-          winhighlight = 'Normal:CmpPmenu,FloatBorder:CmpBorder,CursorLine:CmpSel',
+          -- THIS IS THE FIX:
+          -- It maps the 'CursorLine' (selected line) to the 'CmpSel' highlight group.
+          -- PmenuSel is also mapped to CmpSel for consistency.
+          winhighlight = 'Normal:CmpPmenu,FloatBorder:CmpBorder,CursorLine:CmpSel,PmenuSel:CmpSel',
         }),
         documentation = cmp.config.window.bordered({
           border = 'rounded',
@@ -99,14 +104,14 @@ return {
           require('luasnip').lsp_expand(args.body)
         end,
       },
-      
+
       -- Enable auto-completion *only* after typing a character
       completion = {
         keyword_length = 1,
         -- Set trigger characters to show the menu immediately after certain symbols (e.g., in OOP languages)
         -- trigger_characters = { '.', ':', '-', '>', '/' } -- Uncomment to activate
       },
-      
+
       -- Tweak performance for better visibility
       performance = {
         max_view_entries = 12, -- Show a couple more entries
@@ -128,3 +133,5 @@ return {
     })
   end,
 }
+
+
