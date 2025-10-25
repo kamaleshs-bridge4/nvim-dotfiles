@@ -2,31 +2,22 @@
 
 A beautiful, feature-rich Neovim configuration with transparent themes, AI assistance, and a complete IDE experience.
 
-![Neovim Banner]()
-<img width="1512" height="916" alt="image" src="https://github.com/user-attachments/assets/51e4e26a-3882-419c-b24f-9c8320225cae" />
-
-
 ## 📸 Screenshots
 
 ### Dashboard
-![Dashboard]()
-<!-- Screenshot: Alpha dashboard start screen -->
+<img width="1512" height="916" alt="image" src="https://github.com/user-attachments/assets/51e4e26a-3882-419c-b24f-9c8320225cae" />
 
 ### Transparent Theme
-![Transparent Theme]()
-<!-- Screenshot: Transparent background with blur effect -->
+<img width="1512" height="917" alt="image" src="https://github.com/user-attachments/assets/df8eab3e-e0b7-4a75-84da-004359426bf5" />
 
 ### Telescope File Finder
-![Telescope]()
-<!-- Screenshot: Telescope file finder with transparent background -->
+<img width="1512" height="917" alt="image" src="https://github.com/user-attachments/assets/a7508bb0-33e7-4eeb-a17d-0e559c41748d" />
 
 ### LSP in Action
-![LSP Features]()
-<!-- Screenshot: Code with LSP diagnostics and hover information -->
+<img width="1512" height="647" alt="image" src="https://github.com/user-attachments/assets/d6e0ca60-d3ed-4e07-b0b7-8a3d669955a5" />
 
 ### AI Assistant
-![Sidekick AI]()
-<!-- Screenshot: Sidekick with Cursor agent in action -->
+<img width="1512" height="908" alt="image" src="https://github.com/user-attachments/assets/de824441-6103-4f05-bec0-275544b18aeb" />
 
 ---
 
