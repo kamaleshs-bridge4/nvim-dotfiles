@@ -3,7 +3,8 @@
 A beautiful, feature-rich Neovim configuration with transparent themes, AI assistance, and a complete IDE experience.
 
 ![Neovim Banner]()
-<!-- Screenshot: Main editor view with transparent background -->
+<img width="1512" height="916" alt="image" src="https://github.com/user-attachments/assets/51e4e26a-3882-419c-b24f-9c8320225cae" />
+
 
 ## 📸 Screenshots
 
