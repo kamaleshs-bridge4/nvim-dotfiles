@@ -30,7 +30,10 @@ return {
   -- 1. Ensure the 'nvim-telescope/telescope.nvim' plugin is installed and configured
   {
     'nvim-telescope/telescope.nvim',
-    dependencies = { 'nvim-lua/plenary.nvim' },
+    dependencies = { 
+      'nvim-lua/plenary.nvim',
+      'nvim-tree/nvim-web-devicons',
+    },
     
     -- 2. Define Keymaps
     keys = {
@@ -41,17 +44,35 @@ return {
         end, 
         desc = "Fuzzy Find Files" 
       },
+      -- Map <leader>fs for project-wide search (like VSCode Cmd+Shift+F)
+      { "<leader>fs",
+        function()
+          require('telescope.builtin').live_grep()
+        end,
+        desc = "Search in Project (live grep)"
+      },
+      -- Map <leader>fw to search for word under cursor
+      { "<leader>fw",
+        function()
+          require('telescope.builtin').grep_string()
+        end,
+        desc = "Find Word under cursor"
+      },
     },
     
     -- 3. Configure Telescope (Basic Setup)
     config = function()
       require("telescope").setup {
         defaults = {
+          -- Rounded borders for modern aesthetic
+          borderchars = { '─', '│', '─', '│', '╭', '╮', '╯', '╰' },
           -- Customize layout and mappings for a better experience
           layout_config = {
               width = 0.9,
               height = 0.9,
           },
+          -- Transparent background settings
+          winblend = 0,
           mappings = {
             n = {
               -- ADDED: Map <Tab> in normal mode to focus the preview window
@@ -69,6 +90,29 @@ return {
           },
         },
       }
+      
+      -- Set transparent background for Telescope windows
+      local telescope_augroup = vim.api.nvim_create_augroup("TelescopeTransparency", { clear = true })
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "TelescopeResults",
+        group = telescope_augroup,
+        callback = function()
+          vim.api.nvim_set_hl(0, "TelescopeNormal", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopePromptNormal", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopeResultsNormal", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopePreviewNormal", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopePromptBorder", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopeTitle", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopePromptTitle", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { bg = "none" })
+          vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { bg = "none" })
+        end,
+      })
+      
+      -- Load telescope extensions if available
+      pcall(require('telescope').load_extension, 'notify')
     end
   }
 }
