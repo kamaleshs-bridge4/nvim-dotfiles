@@ -40,9 +40,13 @@ return {
       -- Map <leader>ff (The most common mapping) to open the file finder
       { "<leader>ff", 
         function() 
-          require('telescope.builtin').find_files() 
+          require('telescope.builtin').find_files({
+            hidden = true, -- Include hidden files
+            no_ignore = false, -- Respect .gitignore
+            follow = true, -- Follow symlinks
+          }) 
         end, 
-        desc = "Fuzzy Find Files" 
+        desc = "Fuzzy Find Files (including hidden)" 
       },
       -- Map <leader>fs for project-wide search (like VSCode Cmd+Shift+F)
       { "<leader>fs",
@@ -91,25 +95,7 @@ return {
         },
       }
       
-      -- Set transparent background for Telescope windows
-      local telescope_augroup = vim.api.nvim_create_augroup("TelescopeTransparency", { clear = true })
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = "TelescopeResults",
-        group = telescope_augroup,
-        callback = function()
-          vim.api.nvim_set_hl(0, "TelescopeNormal", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopePromptNormal", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopeResultsNormal", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopePreviewNormal", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopePromptBorder", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopeTitle", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopePromptTitle", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { bg = "none" })
-          vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { bg = "none" })
-        end,
-      })
+      -- Telescope theming is now handled centrally by catppuccin.lua
       
       -- Load telescope extensions if available
       pcall(require('telescope').load_extension, 'notify')

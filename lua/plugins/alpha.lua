@@ -42,7 +42,7 @@ return {
 
     dashboard.section.footer.val = footer()
 
-    -- Set colors
+    -- Set colors (will adapt to current Catppuccin theme)
     dashboard.section.header.opts.hl = "Include"
     dashboard.section.buttons.opts.hl = "Keyword"
     dashboard.section.footer.opts.hl = "Type"

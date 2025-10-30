@@ -4,17 +4,17 @@ return {
   name = "project-theme-manager",
   event = "VimEnter",
   config = function()
-    -- 1. Define your project-to-theme mappings
+    -- 1. Define your project-to-theme mappings (only Catppuccin variants)
     local project_themes = {
-      ["nvim"] = "gruvbox",
+      ["nvim"] = "catppuccin-mocha",
       ["booking_service"] = "catppuccin-macchiato",
       ["foundation"] = "catppuccin-mocha",
       ["goutils"] = "catppuccin-mocha",
       ["rewards-catalogue"] = "catppuccin-mocha",
     }
     
-    -- 2. Define your default theme
-    local default_theme = "gruvbox"
+    -- 2. Define your default theme (Catppuccin mocha)
+    local default_theme = "catppuccin-mocha"
     
     -- 3. Function to setup completion menu highlights
     local function setup_cmp_highlights()
@@ -28,13 +28,7 @@ return {
       vim.api.nvim_set_hl(0, 'CmpBorder', { link = 'FloatBorder' })
       
       -- CmpSel: The SELECTED item in the completion menu (this is the key one!)
-      vim.api.nvim_set_hl(0, 'CmpSel', { 
-        bg = '#504945',  -- Gruvbox dark2 color
-        fg = '#fbf1c7',  -- Gruvbox fg color
-        bold = true 
-      })
-      
-      -- For Catppuccin themes, adjust the selection color
+      -- Use Catppuccin colors dynamically based on current theme
       local colorscheme = vim.g.colors_name or ""
       if colorscheme:match("catppuccin") then
         if colorscheme:match("mocha") then
@@ -49,7 +43,26 @@ return {
             fg = '#cad3f5',  -- Catppuccin macchiato text
             bold = true
           })
+        elseif colorscheme:match("frappe") then
+          vim.api.nvim_set_hl(0, 'CmpSel', {
+            bg = '#414559',  -- Catppuccin frappe surface1
+            fg = '#c6d0f5',  -- Catppuccin frappe text
+            bold = true
+          })
+        elseif colorscheme:match("latte") then
+          vim.api.nvim_set_hl(0, 'CmpSel', {
+            bg = '#e6e9ef',  -- Catppuccin latte surface1
+            fg = '#4c4f69',  -- Catppuccin latte text
+            bold = true
+          })
         end
+      else
+        -- Fallback for other themes
+        vim.api.nvim_set_hl(0, 'CmpSel', { 
+          bg = '#504945',  -- Default dark color
+          fg = '#fbf1c7',  -- Default light color
+          bold = true 
+        })
       end
     end
     

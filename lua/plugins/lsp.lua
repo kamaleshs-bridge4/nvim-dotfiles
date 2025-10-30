@@ -174,8 +174,6 @@ return {
           command = {
             'golangci-lint',
             'run',
-            '--config',
-            '.golangci.yaml',
             '--output.text.path',
             '/dev/null',
             '--output.json.path',
@@ -184,6 +182,54 @@ return {
             '--issues-exit-code=1',
           },
         },
+        on_attach = function(client, bufnr)
+          -- Custom function to find .golangci.yaml recursively up the directory tree
+          local function find_golangci_config()
+            local current_dir = vim.fn.expand('%:p:h')
+            local config_files = { '.golangci.yaml', '.golangci.yml' }
+            
+            -- Function to check if config file exists in a directory
+            local function check_config_in_dir(dir)
+              for _, config_file in ipairs(config_files) do
+                local config_path = dir .. '/' .. config_file
+                if vim.fn.filereadable(config_path) == 1 then
+                  return config_path
+                end
+              end
+              return nil
+            end
+            
+            -- Check current directory first
+            local config = check_config_in_dir(current_dir)
+            if config then
+              return config
+            end
+            
+            -- Recursively check parent directories up to root
+            local dir = current_dir
+            while dir ~= '/' and dir ~= '' do
+              local parent_dir = vim.fn.fnamemodify(dir, ':h')
+              if parent_dir == dir then -- reached root
+                break
+              end
+              config = check_config_in_dir(parent_dir)
+              if config then
+                return config
+              end
+              dir = parent_dir
+            end
+            
+            return nil -- no config found
+          end
+          
+          -- Find config file and set working directory
+          local config_file = find_golangci_config()
+          if config_file then
+            local config_dir = vim.fn.fnamemodify(config_file, ':h')
+            -- Change working directory to where config is located
+            client.config.cmd = { 'sh', '-c', string.format('cd %s && golangci-lint-langserver', vim.fn.shellescape(config_dir)) }
+          end
+        end,
       })
 
       -- --------------------------------------------------------------------------
@@ -194,7 +240,7 @@ return {
           'html', 'cssls', 'jsonls', 'ts_ls',
           'lua_ls', 'pyright', 'bashls', 'rust_analyzer', 'ruby_lsp',
           'gopls',
-          'golangci_lint_ls', -- Added golangci-lint LSP
+          'golangci_lint_ls', -- Re-enabled for diagnostics
         },
         automatic_enable = true,
       })
@@ -359,8 +405,10 @@ return {
       })
 
       -- --------------------------------------------------------------------------
-      -- 6. Go Auto-format and Organize Imports on Save
+      -- 6. Go Auto-format, Organize Imports, and Lint Autofix on Save
       -- --------------------------------------------------------------------------
+      
+      -- Go formatting and import organization on save
       vim.api.nvim_create_autocmd('BufWritePre', {
         pattern = { '*.go' },
         group = vim.api.nvim_create_augroup('GoFormatting', { clear = true }),
@@ -378,6 +426,224 @@ return {
                 vim.lsp.util.apply_workspace_edit(r.edit, 'utf-8')
               end
             end
+          end
+        end,
+      })
+
+      -- Go lint autofix on save (similar to Ruby RuboCop)
+      local function golangci_lint_exists()
+        return vim.fn.executable('golangci-lint') == 1
+      end
+
+      local function find_golangci_config_for_autofix()
+        local current_dir = vim.fn.expand('%:p:h')
+        local config_files = { '.golangci.yaml', '.golangci.yml' }
+        
+        -- Function to check if config file exists in a directory
+        local function check_config_in_dir(dir)
+          for _, config_file in ipairs(config_files) do
+            local config_path = dir .. '/' .. config_file
+            if vim.fn.filereadable(config_path) == 1 then
+              return config_path
+            end
+          end
+          return nil
+        end
+        
+        -- Check current directory first
+        local config = check_config_in_dir(current_dir)
+        if config then
+          return config
+        end
+        
+        -- Recursively check parent directories up to root
+        local dir = current_dir
+        while dir ~= '/' and dir ~= '' do
+          local parent_dir = vim.fn.fnamemodify(dir, ':h')
+          if parent_dir == dir then -- reached root
+            break
+          end
+          config = check_config_in_dir(parent_dir)
+          if config then
+            return config
+          end
+          dir = parent_dir
+        end
+        
+        return nil -- no config found
+      end
+
+      -- Go lint autofix temporarily disabled
+      --[[
+      -- Track if file was actually written to prevent running on file open
+      local file_write_times = {}
+      
+      vim.api.nvim_create_autocmd('BufWritePre', {
+        pattern = { '*.go' },
+        group = vim.api.nvim_create_augroup('GoLintPreWrite', { clear = true }),
+        callback = function(args)
+          local file_path = vim.api.nvim_buf_get_name(args.buf)
+          if file_path ~= '' then
+            file_write_times[file_path] = vim.fn.getftime(file_path)
+          end
+        end,
+      })
+      --]]
+
+      --[[
+      vim.api.nvim_create_autocmd('BufWritePost', {
+        pattern = { '*.go' },
+        group = vim.api.nvim_create_augroup('GoLinting', { clear = true }),
+        callback = function(args)
+          if not golangci_lint_exists() then
+            vim.notify('golangci-lint not found', vim.log.levels.WARN)
+            return
+          end
+
+          local file_path = vim.api.nvim_buf_get_name(args.buf)
+          if file_path == '' or vim.fn.filereadable(file_path) == 0 then
+            return
+          end
+
+          -- Only run if file was actually written (not just opened)
+          local current_time = vim.fn.getftime(file_path)
+          local previous_time = file_write_times[file_path]
+          if not previous_time or current_time <= previous_time then
+            return
+          end
+
+          -- Find golangci-lint config file
+          local config_file = find_golangci_config_for_autofix()
+          local cmd
+          
+          if config_file then
+            -- Extract directory from config file path
+            local working_dir = vim.fn.fnamemodify(config_file, ':h')
+            -- Get relative path from config directory to file
+            local file_dir = vim.fn.fnamemodify(file_path, ':h')
+            local file_name = vim.fn.fnamemodify(file_path, ':t')
+            
+            -- Calculate relative path from config dir to file
+            local relative_path = vim.fn.fnamemodify(file_path, ':p')
+            local config_dir = vim.fn.fnamemodify(config_file, ':p:h')
+            
+            -- Use vim.fn.fnamemodify to get relative path
+            local relative_file_path = vim.fn.fnamemodify(relative_path, ':p')
+            local relative_file = relative_file_path:gsub('^' .. vim.fn.escape(config_dir, '\\') .. '/', '')
+            
+            cmd = string.format('cd %s && golangci-lint run --fix %s', 
+                               vim.fn.shellescape(working_dir), 
+                               vim.fn.shellescape(relative_file))
+            
+          else
+            -- No config found, run from file's directory
+            local working_dir = vim.fn.fnamemodify(file_path, ':h')
+            local file_name = vim.fn.fnamemodify(file_path, ':t')
+            cmd = string.format('cd %s && golangci-lint run --fix %s', 
+                               vim.fn.shellescape(working_dir), 
+                               vim.fn.shellescape(file_name))
+            
+          end
+
+          local output = vim.fn.system(cmd)
+          local exit_code = vim.v.shell_error
+
+          if exit_code == 0 or exit_code == 1 then
+            vim.cmd('checktime')
+          else
+            vim.notify('golangci-lint failed: ' .. output, vim.log.levels.ERROR)
+          end
+        end,
+      })
+      --]]
+
+      -- Go lint autofix on save (simplified version)
+      local function golangci_lint_exists()
+        return vim.fn.executable('golangci-lint') == 1
+      end
+
+      local function find_golangci_config_for_autofix()
+        local current_dir = vim.fn.expand('%:p:h')
+        local config_files = { '.golangci.yaml', '.golangci.yml' }
+        
+        -- Function to check if config file exists in a directory
+        local function check_config_in_dir(dir)
+          for _, config_file in ipairs(config_files) do
+            local config_path = dir .. '/' .. config_file
+            if vim.fn.filereadable(config_path) == 1 then
+              return config_path
+            end
+          end
+          return nil
+        end
+        
+        -- Check current directory first
+        local config = check_config_in_dir(current_dir)
+        if config then
+          return config
+        end
+        
+        -- Recursively check parent directories up to root
+        local dir = current_dir
+        while dir ~= '/' and dir ~= '' do
+          local parent_dir = vim.fn.fnamemodify(dir, ':h')
+          if parent_dir == dir then -- reached root
+            break
+          end
+          config = check_config_in_dir(parent_dir)
+          if config then
+            return config
+          end
+          dir = parent_dir
+        end
+        
+        return nil -- no config found
+      end
+
+      vim.api.nvim_create_autocmd('BufWritePost', {
+        pattern = { '*.go' },
+        group = vim.api.nvim_create_augroup('GoLinting', { clear = true }),
+        callback = function(args)
+          if not golangci_lint_exists() then
+            return -- silently skip if golangci-lint not available
+          end
+
+          local file_path = vim.api.nvim_buf_get_name(args.buf)
+          if file_path == '' or vim.fn.filereadable(file_path) == 0 then
+            return
+          end
+
+          -- Find golangci-lint config file
+          local config_file = find_golangci_config_for_autofix()
+          local cmd
+          
+          if config_file then
+            -- Extract directory from config file path
+            local working_dir = vim.fn.fnamemodify(config_file, ':h')
+            -- Get relative path from config directory to file
+            local relative_path = vim.fn.fnamemodify(file_path, ':p')
+            local config_dir = vim.fn.fnamemodify(config_file, ':p:h')
+            
+            -- Calculate relative path from config dir to file
+            local relative_file = relative_path:gsub('^' .. vim.fn.escape(config_dir, '\\') .. '/', '')
+            
+            cmd = string.format('cd %s && golangci-lint run --fix %s', 
+                               vim.fn.shellescape(working_dir), 
+                               vim.fn.shellescape(relative_file))
+          else
+            -- No config found, run from file's directory
+            local working_dir = vim.fn.fnamemodify(file_path, ':h')
+            local file_name = vim.fn.fnamemodify(file_path, ':t')
+            cmd = string.format('cd %s && golangci-lint run --fix %s', 
+                               vim.fn.shellescape(working_dir), 
+                               vim.fn.shellescape(file_name))
+          end
+
+          local output = vim.fn.system(cmd)
+          local exit_code = vim.v.shell_error
+
+          if exit_code == 0 or exit_code == 1 then
+            vim.cmd('checktime')
           end
         end,
       })

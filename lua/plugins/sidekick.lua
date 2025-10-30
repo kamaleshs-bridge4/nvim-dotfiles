@@ -72,6 +72,7 @@ return {
         size = 0.4, -- 40% of editor height/width
         border = "rounded", -- rounded borders for consistency
       },
+      
     },
     
     -- Notification configuration
@@ -107,6 +108,29 @@ return {
   config = function(_, opts)
     require("sidekick").setup(opts)
     
+    -- Add terminal keymaps for all terminal buffers (including sidekick)
+    vim.api.nvim_create_autocmd("TermOpen", {
+      pattern = "*",
+      callback = function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        -- Map ESC to exit terminal mode to normal mode for all terminal buffers
+        vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', {
+          desc = 'Exit Terminal Mode to Normal Mode',
+          buffer = bufnr,
+          nowait = true,
+          silent = true,
+        })
+        
+        -- Also add a keymap to re-enter terminal mode from normal mode
+        vim.keymap.set('n', 'i', 'a', {
+          desc = 'Re-enter Terminal Insert Mode',
+          buffer = bufnr,
+          nowait = true,
+          silent = true,
+        })
+      end,
+    })
+    
     -- Integrate with lualine (statusline)
     if pcall(require, "lualine") then
       local lualine_config = require("lualine").get_config()
@@ -130,14 +154,14 @@ return {
           local status = require("sidekick.status").get()
           if status then
             if status.kind == "Error" then
-              return { fg = "#fb4934" } -- red
+              return { fg = "DiagnosticError" } -- Use theme colors
             elseif status.busy then
-              return { fg = "#fabd2f" } -- yellow
+              return { fg = "DiagnosticWarn" } -- Use theme colors
             else
-              return { fg = "#8ec07c" } -- green
+              return { fg = "DiagnosticOk" } -- Use theme colors
             end
           end
-          return { fg = "#928374" } -- gray
+          return { fg = "Comment" } -- Use theme colors
         end,
         cond = function()
           return require("sidekick.status").get() ~= nil
@@ -155,7 +179,7 @@ return {
           end
           return ""
         end,
-        color = { fg = "#83a598" }, -- blue
+        color = { fg = "#89b4fa" }, -- Catppuccin blue
         cond = function()
           return #require("sidekick.status").cli() > 0
         end,

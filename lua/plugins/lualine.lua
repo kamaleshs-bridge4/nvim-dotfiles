@@ -4,13 +4,11 @@ return {
   dependencies = { 'nvim-tree/nvim-web-devicons' },
   event = 'VeryLazy',
   config = function()
-    -- Get the current colorscheme to adapt
+    -- Get the current colorscheme to adapt (only Catppuccin variants)
     local function get_theme()
-      local colorscheme = vim.g.colors_name or 'gruvbox'
-      if colorscheme == 'catppuccin' or colorscheme == 'catppuccin-mocha' then
+      local colorscheme = vim.g.colors_name or 'catppuccin-mocha'
+      if colorscheme:match('catppuccin') then
         return 'catppuccin'
-      elseif colorscheme == 'gruvbox' then
-        return 'gruvbox'
       else
         return 'auto'
       end
@@ -99,7 +97,7 @@ return {
               return msg
             end,
             icon = '',
-            color = { fg = '#83a598' }, -- Gruvbox blue
+            color = { fg = '#89b4fa' }, -- Catppuccin blue
           },
           {
             'encoding',
