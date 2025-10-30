@@ -12,8 +12,8 @@ return {
       -- Timeout for notifications
       timeout = 3000,
       
-      -- Background color transparency
-      background_colour = "#000000",
+      -- Background color (solid, matches theme)
+      background_colour = "#1e1e2e", -- Catppuccin base color, will be overridden by theme
       
       -- Icons for notification levels
       icons = {
@@ -61,18 +61,25 @@ return {
       callback = function()
         local colorscheme = vim.g.colors_name or ""
         if colorscheme:match("catppuccin") then
-          -- Use Catppuccin colors for notifications
-          vim.api.nvim_set_hl(0, "NotifyERRORBorder", { fg = "#f38ba8" }) -- Catppuccin red
-          vim.api.nvim_set_hl(0, "NotifyWARNBorder", { fg = "#f9e2af" })  -- Catppuccin yellow
-          vim.api.nvim_set_hl(0, "NotifyINFOBorder", { fg = "#89b4fa" })  -- Catppuccin blue
-          vim.api.nvim_set_hl(0, "NotifyDEBUGBorder", { fg = "#a6e3a1" }) -- Catppuccin green
-          vim.api.nvim_set_hl(0, "NotifyTRACEBorder", { fg = "#cba6f7" }) -- Catppuccin purple
+          local colors = require("catppuccin.palettes").get_palette()
+          -- Use Catppuccin colors for notifications with solid backgrounds
+          vim.api.nvim_set_hl(0, "NotifyERRORBorder", { fg = colors.red, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyWARNBorder", { fg = colors.yellow, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyINFOBorder", { fg = colors.blue, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyDEBUGBorder", { fg = colors.green, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyTRACEBorder", { fg = colors.lavender, bg = colors.mantle })
           
-          vim.api.nvim_set_hl(0, "NotifyERRORTitle", { fg = "#f38ba8" })
-          vim.api.nvim_set_hl(0, "NotifyWARNTitle", { fg = "#f9e2af" })
-          vim.api.nvim_set_hl(0, "NotifyINFOTitle", { fg = "#89b4fa" })
-          vim.api.nvim_set_hl(0, "NotifyDEBUGTitle", { fg = "#a6e3a1" })
-          vim.api.nvim_set_hl(0, "NotifyTRACETitle", { fg = "#cba6f7" })
+          vim.api.nvim_set_hl(0, "NotifyERRORTitle", { fg = colors.red, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyWARNTitle", { fg = colors.yellow, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyINFOTitle", { fg = colors.blue, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyDEBUGTitle", { fg = colors.green, bg = colors.mantle })
+          vim.api.nvim_set_hl(0, "NotifyTRACETitle", { fg = colors.lavender, bg = colors.mantle })
+          
+          -- Set notification body background
+          vim.api.nvim_set_hl(0, "NotifyBackground", { bg = colors.mantle })
+          
+          -- Update background color for notifications dynamically
+          notify.setup({ background_colour = colors.mantle })
         else
           -- Fallback colors for other themes
           vim.api.nvim_set_hl(0, "NotifyERRORBorder", { fg = "#fb4934" })

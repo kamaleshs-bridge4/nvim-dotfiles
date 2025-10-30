@@ -26,37 +26,37 @@ end
 function M.apply_ui_theming()
   local colors = require("catppuccin.palettes").get_palette()
   
-  -- Telescope theming
-  vim.api.nvim_set_hl(0, "TelescopeNormal", { bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopeBorder", { fg = colors.blue, bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopePromptNormal", { bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopePromptBorder", { fg = colors.teal, bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = colors.teal, bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopeResultsNormal", { bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { fg = colors.blue, bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = colors.blue, bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopePreviewNormal", { bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { fg = colors.blue, bg = "none" })
-  vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = colors.blue, bg = "none" })
+  -- Telescope theming with solid backgrounds
+  vim.api.nvim_set_hl(0, "TelescopeNormal", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "TelescopeBorder", { fg = colors.blue, bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "TelescopePromptNormal", { bg = colors.crust })
+  vim.api.nvim_set_hl(0, "TelescopePromptBorder", { fg = colors.teal, bg = colors.crust })
+  vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = colors.teal, bg = colors.crust })
+  vim.api.nvim_set_hl(0, "TelescopeResultsNormal", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { fg = colors.blue, bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = colors.blue, bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "TelescopePreviewNormal", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { fg = colors.blue, bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = colors.blue, bg = colors.mantle })
   vim.api.nvim_set_hl(0, "TelescopeSelection", { bg = colors.surface0, fg = colors.text })
   
   -- Sidekick theming
-  vim.api.nvim_set_hl(0, "SidekickNormal", { bg = "none" })
-  vim.api.nvim_set_hl(0, "SidekickBorder", { fg = colors.blue, bg = "none" })
-  vim.api.nvim_set_hl(0, "SidekickTitle", { fg = colors.teal, bg = "none" })
+  vim.api.nvim_set_hl(0, "SidekickNormal", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "SidekickBorder", { fg = colors.blue, bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "SidekickTitle", { fg = colors.teal, bg = colors.mantle })
   
   -- ToggleTerm theming
-  vim.api.nvim_set_hl(0, "ToggleTermNormal", { bg = "none" })
-  vim.api.nvim_set_hl(0, "ToggleTermBorder", { fg = colors.blue, bg = "none" })
+  vim.api.nvim_set_hl(0, "ToggleTermNormal", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "ToggleTermBorder", { fg = colors.blue, bg = colors.mantle })
   
   -- NvimTree theming
-  vim.api.nvim_set_hl(0, "NvimTreeNormal", { bg = "none" })
-  vim.api.nvim_set_hl(0, "NvimTreeNormalFloat", { bg = "none" })
-  vim.api.nvim_set_hl(0, "NvimTreeWinSeparator", { fg = colors.surface0, bg = "none" })
+  vim.api.nvim_set_hl(0, "NvimTreeNormal", { bg = colors.base })
+  vim.api.nvim_set_hl(0, "NvimTreeNormalFloat", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "NvimTreeWinSeparator", { fg = colors.surface0, bg = colors.base })
   
   -- General floating window theming
-  vim.api.nvim_set_hl(0, "FloatBorder", { fg = colors.blue, bg = "none" })
-  vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
+  vim.api.nvim_set_hl(0, "FloatBorder", { fg = colors.blue, bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "NormalFloat", { bg = colors.mantle })
   
   -- Enhanced cursor line
   vim.api.nvim_set_hl(0, "CursorLine", { bg = colors.surface0 })
@@ -81,6 +81,26 @@ function M.apply_ui_theming()
     fg = colors.text, 
     bold = true 
   })
+  
+  -- DAP UI theming
+  vim.api.nvim_set_hl(0, "DapUINormal", { bg = colors.base })
+  vim.api.nvim_set_hl(0, "DapUIFloatBorder", { fg = colors.blue, bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIVariable", { bg = colors.base })
+  vim.api.nvim_set_hl(0, "DapUIValue", { bg = colors.base })
+  vim.api.nvim_set_hl(0, "DapUIScope", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIThread", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIStoppedThread", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIFrameName", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUISource", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUILineNumber", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIWatchesValue", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIWatchesEmpty", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIWatchesError", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIBreakpointsPath", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIBreakpointsInfo", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIBreakpointsCurrentLine", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIBreakpointsLine", { bg = colors.mantle })
+  vim.api.nvim_set_hl(0, "DapUIBreakpointsDisabledLine", { bg = colors.mantle })
 end
 
 return {
@@ -90,7 +110,7 @@ return {
   config = function()
     require("catppuccin").setup({
       flavour = M.variants[M.current_index],
-      transparent_background = true,
+      transparent_background = false,
       integrations = {
         cmp = true, 
         treesitter = true,
@@ -116,20 +136,21 @@ return {
       },
       custom_highlights = function(colors)
         return {
-          -- Make borders more visible with subtle colors
-          FloatBorder = { fg = colors.blue, bg = "none" },
-          -- Telescope transparency
-          TelescopeNormal = { bg = "none" },
-          TelescopeBorder = { fg = colors.blue, bg = "none" },
-          TelescopePromptNormal = { bg = "none" },
-          TelescopePromptBorder = { fg = colors.teal, bg = "none" },
-          TelescopePromptTitle = { fg = colors.teal, bg = "none" },
-          TelescopeResultsNormal = { bg = "none" },
-          TelescopeResultsBorder = { fg = colors.blue, bg = "none" },
-          TelescopeResultsTitle = { fg = colors.blue, bg = "none" },
-          TelescopePreviewNormal = { bg = "none" },
-          TelescopePreviewBorder = { fg = colors.blue, bg = "none" },
-          TelescopePreviewTitle = { fg = colors.blue, bg = "none" },
+          -- Floating windows with solid backgrounds
+          FloatBorder = { fg = colors.blue, bg = colors.mantle },
+          NormalFloat = { bg = colors.mantle },
+          -- Telescope with solid backgrounds
+          TelescopeNormal = { bg = colors.mantle },
+          TelescopeBorder = { fg = colors.blue, bg = colors.mantle },
+          TelescopePromptNormal = { bg = colors.crust },
+          TelescopePromptBorder = { fg = colors.teal, bg = colors.crust },
+          TelescopePromptTitle = { fg = colors.teal, bg = colors.crust },
+          TelescopeResultsNormal = { bg = colors.mantle },
+          TelescopeResultsBorder = { fg = colors.blue, bg = colors.mantle },
+          TelescopeResultsTitle = { fg = colors.blue, bg = colors.mantle },
+          TelescopePreviewNormal = { bg = colors.mantle },
+          TelescopePreviewBorder = { fg = colors.blue, bg = colors.mantle },
+          TelescopePreviewTitle = { fg = colors.blue, bg = colors.mantle },
           TelescopeSelection = { bg = colors.surface0, fg = colors.text },
           -- Enhanced cursor line
           CursorLine = { bg = colors.surface0 },

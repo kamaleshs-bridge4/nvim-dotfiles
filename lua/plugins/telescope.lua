@@ -75,7 +75,7 @@ return {
               width = 0.9,
               height = 0.9,
           },
-          -- Transparent background settings
+          -- Solid background (no transparency)
           winblend = 0,
           mappings = {
             n = {

@@ -1,4 +1,4 @@
--- Beautiful statusline with transparency support
+-- Beautiful statusline
 return {
   'nvim-lualine/lualine.nvim',
   dependencies = { 'nvim-tree/nvim-web-devicons' },
