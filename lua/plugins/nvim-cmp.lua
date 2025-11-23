@@ -82,19 +82,13 @@ return {
         }),
       },
 
-      -- 4. WINDOW CUSTOMIZATION (Rounded Borders for Softer Look)
+      -- 4. WINDOW CUSTOMIZATION
       window = {
-        -- Use rounded borders for a modern, softer appearance
         completion = cmp.config.window.bordered({
           border = 'rounded',
-          -- THIS IS THE FIX:
-          -- It maps the 'CursorLine' (selected line) to the 'CmpSel' highlight group.
-          -- PmenuSel is also mapped to CmpSel for consistency.
-          winhighlight = 'Normal:CmpPmenu,FloatBorder:CmpBorder,CursorLine:CmpSel,PmenuSel:CmpSel',
         }),
         documentation = cmp.config.window.bordered({
           border = 'rounded',
-          winhighlight = 'Normal:CmpPmenu,FloatBorder:CmpBorder',
         }),
       },
 

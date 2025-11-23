@@ -4,20 +4,9 @@ return {
   dependencies = { 'nvim-tree/nvim-web-devicons' },
   event = 'VeryLazy',
   config = function()
-    -- Get the current colorscheme to adapt (only Catppuccin variants)
-    local function get_theme()
-      local colorscheme = vim.g.colors_name or 'catppuccin-mocha'
-      if colorscheme:match('catppuccin') then
-        return 'catppuccin'
-      else
-        return 'auto'
-      end
-    end
-
     require('lualine').setup({
       options = {
         icons_enabled = true,
-        theme = get_theme(),
         component_separators = { left = '│', right = '│' },
         section_separators = { left = '', right = '' },
         disabled_filetypes = {
@@ -97,7 +86,6 @@ return {
               return msg
             end,
             icon = '',
-            color = { fg = '#89b4fa' }, -- Catppuccin blue
           },
           {
             'encoding',

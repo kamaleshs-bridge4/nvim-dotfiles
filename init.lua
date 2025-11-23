@@ -1,12 +1,8 @@
 require("config.lazy")
 
--- Load gruvbox-dark-hard module early to set up autocmds
-pcall(require, "gruvbox-dark-hard")
-
 -- Basic settings
 vim.o.clipboard = 'unnamedplus'
 vim.opt.number = true
-vim.opt.termguicolors = true
 vim.opt.signcolumn = "number"
 
 -- Cursor settings with blinking
