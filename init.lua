@@ -1,5 +1,8 @@
 require("config.lazy")
 
+-- Load gruvbox-dark-hard module early to set up autocmds
+pcall(require, "gruvbox-dark-hard")
+
 -- Basic settings
 vim.o.clipboard = 'unnamedplus'
 vim.opt.number = true
@@ -40,4 +43,3 @@ vim.opt.smartindent = true
 vim.opt.wrap = false
 vim.opt.scrolloff = 8
 vim.opt.sidescrolloff = 8
-

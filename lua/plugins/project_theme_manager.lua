@@ -4,17 +4,12 @@ return {
   name = "project-theme-manager",
   event = "VimEnter",
   config = function()
-    -- 1. Define your project-to-theme mappings (only Catppuccin variants)
+    -- 1. Define your project-to-theme mappings (Catppuccin variants and Gruvbox)
     local project_themes = {
-      ["nvim"] = "catppuccin-mocha",
-      ["booking_service"] = "catppuccin-macchiato",
-      ["foundation"] = "catppuccin-mocha",
-      ["goutils"] = "catppuccin-mocha",
-      ["rewards-catalogue"] = "catppuccin-mocha",
     }
     
     -- 2. Define your default theme (Catppuccin mocha)
-    local default_theme = "catppuccin-mocha"
+    local default_theme = "gruvbox-dark-hard"
     
     -- 3. Function to setup completion menu highlights
     local function setup_cmp_highlights()
@@ -28,7 +23,7 @@ return {
       vim.api.nvim_set_hl(0, 'CmpBorder', { link = 'FloatBorder' })
       
       -- CmpSel: The SELECTED item in the completion menu (this is the key one!)
-      -- Use Catppuccin colors dynamically based on current theme
+      -- Use theme colors dynamically based on current theme
       local colorscheme = vim.g.colors_name or ""
       if colorscheme:match("catppuccin") then
         if colorscheme:match("mocha") then
@@ -55,6 +50,30 @@ return {
             fg = '#4c4f69',  -- Catppuccin latte text
             bold = true
           })
+        end
+      elseif colorscheme == "gruvbox-dark-hard" then
+        -- Gruvbox dark hard colors
+        vim.api.nvim_set_hl(0, 'CmpSel', {
+          bg = '#504945',  -- Gruvbox dark hard bg3
+          fg = '#fbf1c7',  -- Gruvbox dark hard fg0 (bright white)
+          bold = true
+        })
+        -- Apply gruvbox-dark-hard theming if module is available
+        local gruvbox_dark_hard_module = package.loaded["gruvbox-dark-hard"] or package.loaded["plugins.gruvbox-dark-hard"]
+        if gruvbox_dark_hard_module and gruvbox_dark_hard_module.apply_ui_theming then
+          gruvbox_dark_hard_module.apply_ui_theming()
+        end
+      elseif colorscheme:match("gruvbox") then
+        -- Gruvbox dark colors
+        vim.api.nvim_set_hl(0, 'CmpSel', {
+          bg = '#665c54',  -- Gruvbox bg3 (dark3)
+          fg = '#ebdbb2',  -- Gruvbox fg1 (light1)
+          bold = true
+        })
+        -- Apply gruvbox theming if gruvbox module is available
+        local gruvbox_module = package.loaded["plugins.gruvbox"]
+        if gruvbox_module and gruvbox_module.apply_ui_theming then
+          gruvbox_module.apply_ui_theming()
         end
       else
         -- Fallback for other themes
@@ -93,6 +112,29 @@ return {
       
       -- Apply completion menu highlights after loading the theme
       setup_cmp_highlights()
+      
+      -- Apply gruvbox theming if gruvbox is loaded
+      if theme_to_load == "gruvbox-dark-hard" then
+        -- Use a small delay to ensure gruvbox-dark-hard module is loaded
+        vim.defer_fn(function()
+          -- Try to require the module if not already loaded
+          if not package.loaded["gruvbox-dark-hard"] then
+            pcall(require, "gruvbox-dark-hard")
+          end
+          local gruvbox_dark_hard_module = package.loaded["gruvbox-dark-hard"] or package.loaded["plugins.gruvbox-dark-hard"]
+          if gruvbox_dark_hard_module and gruvbox_dark_hard_module.apply_ui_theming then
+            gruvbox_dark_hard_module.apply_ui_theming()
+          end
+        end, 100)
+      elseif theme_to_load:match("gruvbox") then
+        -- Use a small delay to ensure gruvbox module is loaded
+        vim.defer_fn(function()
+          local gruvbox_module = package.loaded["plugins.gruvbox"]
+          if gruvbox_module and gruvbox_module.apply_ui_theming then
+            gruvbox_module.apply_ui_theming()
+          end
+        end, 100)
+      end
     end
     
     -- 5. Run the function to set the theme on startup

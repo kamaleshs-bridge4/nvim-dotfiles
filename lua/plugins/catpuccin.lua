@@ -167,8 +167,8 @@ return {
       end,
     })
     
-    -- Set up theme cycling keymap
-    vim.keymap.set("n", "<leader>cc", M.cycle_theme, { desc = "Cycle Catppuccin theme variants" })
+    -- Note: Theme switching keymap is handled by gruvbox.lua unified switcher
+    -- This allows <leader>cc to work with both Catppuccin and Gruvbox themes
     
     -- Apply theming on colorscheme change
     vim.api.nvim_create_autocmd("ColorScheme", {
