@@ -1,6 +1,6 @@
 return {
   -- =======================================================================
-  -- 1. LSP CORE SETUP (nvim-lspconfig)
+  -- LSP CONFIGURATION
   -- =======================================================================
   {
     'neovim/nvim-lspconfig',
@@ -13,15 +13,13 @@ return {
     },
 
     config = function()
-      -- Get capabilities for LSP
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
       -- --------------------------------------------------------------------------
-      -- 1. Configure LSP servers using NEW vim.lsp.config() API
+      -- LSP Server Configurations
       -- --------------------------------------------------------------------------
-      -- IMPORTANT: Define configs BEFORE calling mason-lspconfig.setup()
+      -- Note: Must be defined before mason-lspconfig.setup()
 
-      -- Lua LSP
       vim.lsp.config('lua_ls', {
         cmd = { 'lua-language-server' },
         filetypes = { 'lua' },
@@ -39,7 +37,6 @@ return {
         },
       })
 
-      -- Ruby LSP
       vim.lsp.config('ruby_lsp', {
         cmd = { 'ruby-lsp' },
         filetypes = { 'ruby', 'eruby' },
@@ -70,7 +67,6 @@ return {
         },
       })
 
-      -- HTML LSP
       vim.lsp.config('html', {
         cmd = { 'vscode-html-language-server', '--stdio' },
         filetypes = { 'html' },
@@ -78,7 +74,6 @@ return {
         capabilities = capabilities,
       })
 
-      -- CSS LSP
       vim.lsp.config('cssls', {
         cmd = { 'vscode-css-language-server', '--stdio' },
         filetypes = { 'css', 'scss', 'less' },
@@ -86,7 +81,6 @@ return {
         capabilities = capabilities,
       })
 
-      -- JSON LSP
       vim.lsp.config('jsonls', {
         cmd = { 'vscode-json-language-server', '--stdio' },
         filetypes = { 'json', 'jsonc' },
@@ -94,7 +88,6 @@ return {
         capabilities = capabilities,
       })
 
-      -- TypeScript/JavaScript LSP
       vim.lsp.config('ts_ls', {
         cmd = { 'typescript-language-server', '--stdio' },
         filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' },
@@ -102,7 +95,6 @@ return {
         capabilities = capabilities,
       })
 
-      -- Python LSP
       vim.lsp.config('pyright', {
         cmd = { 'pyright-langserver', '--stdio' },
         filetypes = { 'python' },
@@ -110,7 +102,6 @@ return {
         capabilities = capabilities,
       })
 
-      -- Bash LSP
       vim.lsp.config('bashls', {
         cmd = { 'bash-language-server', 'start' },
         filetypes = { 'sh' },
@@ -118,7 +109,6 @@ return {
         capabilities = capabilities,
       })
 
-      -- Rust LSP
       vim.lsp.config('rust_analyzer', {
         cmd = { 'rust-analyzer' },
         filetypes = { 'rust' },
@@ -126,7 +116,6 @@ return {
         capabilities = capabilities,
       })
 
-      -- Go LSP (gopls)
       vim.lsp.config('gopls', {
         cmd = { 'gopls' },
         filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
@@ -136,7 +125,7 @@ return {
           gopls = {
             completeUnimported = true,
             usePlaceholders = true,
-            staticcheck = false, -- Disable gopls staticcheck, let golangci-lint handle it
+            staticcheck = true,
             semanticTokens = true,
             analyses = {
               unusedparams = true,
@@ -164,103 +153,80 @@ return {
         },
       })
 
-      -- golangci-lint Language Server
       vim.lsp.config('golangci_lint_ls', {
         cmd = { 'golangci-lint-langserver' },
-        filetypes = { 'go' },
-        root_markers = { 'go.mod', '.golangci.yml', '.golangci.yaml', '.git' },
+        filetypes = { 'go', 'gomod' },
+        root_markers = { 'go.mod', '.golangci.yaml', '.golangci.yml', '.git' },
         capabilities = capabilities,
         init_options = {
           command = {
-            'golangci-lint',
-            'run',
-            '--output.text.path',
-            '/dev/null',
-            '--output.json.path',
-            'stdout',
+            'golangci-lint', 'run',
+            '--output.text.path', '/dev/null',
+            '--output.json.path', 'stdout',
             '--show-stats=false',
             '--issues-exit-code=1',
           },
         },
-        on_attach = function(client, bufnr)
-          -- Custom function to find .golangci.yaml recursively up the directory tree
-          local function find_golangci_config()
-            local current_dir = vim.fn.expand('%:p:h')
-            local config_files = { '.golangci.yaml', '.golangci.yml' }
-            
-            -- Function to check if config file exists in a directory
-            local function check_config_in_dir(dir)
-              for _, config_file in ipairs(config_files) do
-                local config_path = dir .. '/' .. config_file
-                if vim.fn.filereadable(config_path) == 1 then
-                  return config_path
-                end
-              end
-              return nil
-            end
-            
-            -- Check current directory first
-            local config = check_config_in_dir(current_dir)
-            if config then
-              return config
-            end
-            
-            -- Recursively check parent directories up to root
-            local dir = current_dir
-            while dir ~= '/' and dir ~= '' do
-              local parent_dir = vim.fn.fnamemodify(dir, ':h')
-              if parent_dir == dir then -- reached root
-                break
-              end
-              config = check_config_in_dir(parent_dir)
-              if config then
-                return config
-              end
-              dir = parent_dir
-            end
-            
-            return nil -- no config found
-          end
-          
-          -- Find config file and set working directory
-          local config_file = find_golangci_config()
-          if config_file then
-            local config_dir = vim.fn.fnamemodify(config_file, ':h')
-            -- Change working directory to where config is located
-            client.config.cmd = { 'sh', '-c', string.format('cd %s && golangci-lint-langserver', vim.fn.shellescape(config_dir)) }
-          end
-        end,
       })
 
       -- --------------------------------------------------------------------------
-      -- 2. Setup Mason-LSPConfig with automatic_enable
+      -- Mason LSP Setup
       -- --------------------------------------------------------------------------
       require('mason-lspconfig').setup({
         ensure_installed = {
           'html', 'cssls', 'jsonls', 'ts_ls',
           'lua_ls', 'pyright', 'bashls', 'rust_analyzer', 'ruby_lsp',
-          'gopls',
-          'golangci_lint_ls', -- Re-enabled for diagnostics
+          'gopls', 'golangci_lint_ls',
         },
         automatic_enable = true,
       })
 
       -- --------------------------------------------------------------------------
-      -- 3. Diagnostics Configuration (Default Formatter)
+      -- Diagnostics Configuration
       -- --------------------------------------------------------------------------
+      -- Expand single-character diagnostics to full word (fixes golangci-lint)
+      local orig_underline_show = vim.diagnostic.handlers.underline.show
+      local orig_underline_hide = vim.diagnostic.handlers.underline.hide
+      
+      vim.diagnostic.handlers.underline = {
+        show = function(namespace, bufnr, diagnostics, opts)
+          local adjusted = {}
+          for _, d in ipairs(diagnostics) do
+            local diag = vim.deepcopy(d)
+            -- If diagnostic is single character or zero-width, expand to word
+            if not diag.end_col or diag.col == diag.end_col or (diag.end_col - diag.col <= 1) then
+              local line = vim.api.nvim_buf_get_lines(bufnr, diag.lnum, diag.lnum + 1, false)[1]
+              if line then
+                -- Find word boundaries (1-indexed for string operations)
+                local col = diag.col + 1  -- Convert to 1-indexed
+                local start_col = col
+                local end_col = col
+                -- Expand backward to start of word
+                while start_col > 1 and line:sub(start_col - 1, start_col - 1):match('[%w_]') do
+                  start_col = start_col - 1
+                end
+                -- Expand forward to end of word
+                while end_col <= #line and line:sub(end_col, end_col):match('[%w_]') do
+                  end_col = end_col + 1
+                end
+                diag.col = start_col - 1  -- Convert back to 0-indexed
+                diag.end_col = end_col - 1
+              end
+            end
+            table.insert(adjusted, diag)
+          end
+          orig_underline_show(namespace, bufnr, adjusted, opts)
+        end,
+        hide = orig_underline_hide,
+      }
 
-      -- This is the config table we want to apply.
-      -- The custom `format` function has been removed from `virtual_text`.
+      -- Virtual text disabled - diagnostics shown on demand via K keymap
       local diagnostic_config = {
-        virtual_text = {
-          source = 'always',
-          spacing = 4,
-          prefix = '●',
-          -- NO format function here, so Neovim uses its default
-        },
+        virtual_text = false,
         signs = true,
         update_in_insert = false,
         severity_sort = true,
+        underline = true,
         float = {
           source = 'always',
           border = 'rounded',
@@ -273,77 +239,205 @@ return {
         },
       }
 
-      -- Wrap in vim.schedule() to ensure this config is applied *last*,
-      -- overriding any defaults set by other plugins.
+      -- Configure squiggly underlines using theme colors
+      local function setup_squiggly_underlines()
+        local function get_diagnostic_color(hl_name)
+          local hl = vim.api.nvim_get_hl(0, { name = hl_name })
+          return hl.fg or hl.foreground or nil
+        end
+        
+        local severities = {
+          { name = 'Error', hl = 'DiagnosticError' },
+          { name = 'Warn', hl = 'DiagnosticWarn' },
+          { name = 'Info', hl = 'DiagnosticInfo' },
+          { name = 'Hint', hl = 'DiagnosticHint' },
+        }
+        
+        for _, severity in ipairs(severities) do
+          local color = get_diagnostic_color(severity.hl)
+          -- Force undercurl style for all severities (consistent squiggly lines)
+          vim.api.nvim_set_hl(0, 'DiagnosticUnderline' .. severity.name, {
+            undercurl = true,
+            underline = false,
+            underdouble = false,
+            underdotted = false,
+            underdashed = false,
+            sp = color,
+          })
+        end
+      end
+
+      -- Apply diagnostic config after other plugins
       vim.schedule(function()
         vim.diagnostic.config(diagnostic_config)
+        setup_squiggly_underlines()
       end)
 
-      -- Set updatetime for better responsiveness
+      -- Reapply underlines when colorscheme changes
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        group = vim.api.nvim_create_augroup('DiagnosticSquiggly', { clear = true }),
+        callback = setup_squiggly_underlines,
+      })
+
       vim.opt.updatetime = 300
 
-      -- Auto-show full diagnostic on cursor hold
-      vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
-        group = vim.api.nvim_create_augroup('float_diagnostic', { clear = true }),
-        callback = function()
-          vim.diagnostic.open_float(nil, {
-            focus = false,
-            close_events = { 'BufLeave', 'CursorMoved', 'InsertEnter', 'FocusLost' },
-            border = 'rounded',
-            source = 'always',
-            prefix = ' ',
-            scope = 'cursor',
-            header = '',
-          })
+      -- Utility command to open LSP log
+      vim.api.nvim_create_user_command('LspLog', function()
+        vim.cmd.edit(vim.lsp.get_log_path())
+      end, { desc = 'Open LSP log file' })
+
+      -- Ensure diagnostics are displayed when they change
+      vim.api.nvim_create_autocmd('DiagnosticChanged', {
+        group = vim.api.nvim_create_augroup('LspDiagnosticDisplay', { clear = true }),
+        callback = function(args)
+          local bufnr = args.buf
+          if bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
+          
+          if vim.diagnostic.is_enabled({ bufnr = bufnr }) then
+            vim.diagnostic.show(nil, bufnr)
+          end
+        end,
+      })
+      
+      -- Enable diagnostics when LSP attaches
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('LspDiagnostics', { clear = true }),
+        callback = function(args)
+          vim.diagnostic.enable(args.buf)
         end,
       })
 
       -- --------------------------------------------------------------------------
-      -- 4. Reliable FileType Autocmd for Keymaps
+      -- LSP Keymaps
       -- --------------------------------------------------------------------------
+      -- Shared float options for consistent styling
+      local float_opts = {
+        border = 'rounded',
+        max_width = 120,
+        max_height = 30,
+      }
+
+      -- Track hover window for re-entry
+      local hover_win = nil
+
+      -- Custom hover with border
+      local function hover_with_border()
+        local params = vim.lsp.util.make_position_params()
+        vim.lsp.buf_request(0, 'textDocument/hover', params, function(err, result, ctx, _)
+          if err then return end
+          if not (result and result.contents) then return end
+          local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
+          markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
+          if vim.tbl_isempty(markdown_lines) then return end
+          
+          -- Close existing hover window if it exists
+          if hover_win and vim.api.nvim_win_is_valid(hover_win) then
+            vim.api.nvim_win_close(hover_win, true)
+          end
+          
+          vim.lsp.util.open_floating_preview(markdown_lines, 'markdown', float_opts)
+          
+          -- Find the floating window (it's the most recently created floating window)
+          local all_wins = vim.api.nvim_list_wins()
+          for _, win in ipairs(all_wins) do
+            local win_config = vim.api.nvim_win_get_config(win)
+            if win_config.relative ~= '' then  -- Floating window
+              hover_win = win
+              break
+            end
+          end
+          
+          -- Set up keymaps for scrolling in hover window
+          if hover_win and vim.api.nvim_win_is_valid(hover_win) then
+            local hover_buf = vim.api.nvim_win_get_buf(hover_win)
+            local hover_opts = { noremap = true, silent = true, buffer = hover_buf }
+            
+            -- Enable scrolling with j/k
+            vim.keymap.set('n', 'j', '<C-e>', hover_opts)
+            vim.keymap.set('n', 'k', '<C-y>', hover_opts)
+            vim.keymap.set('n', '<Down>', '<C-e>', hover_opts)
+            vim.keymap.set('n', '<Up>', '<C-y>', hover_opts)
+            vim.keymap.set('n', '<PageDown>', '<C-f>', hover_opts)
+            vim.keymap.set('n', '<PageUp>', '<C-b>', hover_opts)
+            
+            -- Close hover with q or Escape
+            vim.keymap.set('n', 'q', function()
+              if hover_win and vim.api.nvim_win_is_valid(hover_win) then
+                vim.api.nvim_win_close(hover_win, true)
+                hover_win = nil
+              end
+            end, hover_opts)
+            vim.keymap.set('n', '<Esc>', function()
+              if hover_win and vim.api.nvim_win_is_valid(hover_win) then
+                vim.api.nvim_win_close(hover_win, true)
+                hover_win = nil
+              end
+            end, hover_opts)
+          end
+        end)
+      end
+      
+      -- Function to focus hover window if it exists
+      local function focus_hover_window()
+        if hover_win and vim.api.nvim_win_is_valid(hover_win) then
+          vim.api.nvim_set_current_win(hover_win)
+          return true
+        end
+        return false
+      end
+
+      -- Close hover window when cursor moves (unless hovering)
+      local hover_autocmd_group = vim.api.nvim_create_augroup('HoverWindow', { clear = true })
+      vim.api.nvim_create_autocmd('CursorMoved', {
+        group = hover_autocmd_group,
+        callback = function()
+          -- Only close if we're not currently in the hover window
+          if hover_win and vim.api.nvim_win_is_valid(hover_win) then
+            local current_win = vim.api.nvim_get_current_win()
+            if current_win ~= hover_win then
+              vim.api.nvim_win_close(hover_win, true)
+              hover_win = nil
+            end
+          end
+        end,
+      })
+
       local function set_lsp_keymaps()
         local bufnr = vim.api.nvim_get_current_buf()
-        local base_opts = { noremap = true, silent = true, buffer = bufnr }
+        local opts = { noremap = true, silent = true, buffer = bufnr }
 
-        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, vim.tbl_extend('force', base_opts, { desc = '[G]oto [D]eclaration' }))
-        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, vim.tbl_extend('force', base_opts, { desc = '[G]oto [D]efinition' }))
-        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, vim.tbl_extend('force', base_opts, { desc = '[G]oto [I]mplementation' }))
-        vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', base_opts, { desc = '[G]oto [R]eferences' }))
-        vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', base_opts, { desc = 'Hover Documentation' }))
-        vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, vim.tbl_extend('force', base_opts, { desc = 'Signature Help' }))
-        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, vim.tbl_extend('force', base_opts, { desc = 'Code [A]ctions' }))
-        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, vim.tbl_extend('force', base_opts, { desc = '[R]e[n]ame' }))
-        vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, vim.tbl_extend('force', base_opts, { desc = 'Go to previous diagnostic' }))
-        vim.keymap.set('n', ']d', vim.diagnostic.goto_next, vim.tbl_extend('force', base_opts, { desc = 'Go to next diagnostic' }))
-        vim.keymap.set('n', '<leader>vd', vim.diagnostic.open_float, vim.tbl_extend('force', base_opts, { desc = 'View Diagnostic' }))
-
-        -- Quick diagnostic view with 'gl' (go lint)
-        vim.keymap.set('n', 'gl', function()
-          vim.diagnostic.open_float(nil, {
-            border = 'rounded',
-            source = 'always',
-            wrap = true,
-            max_width = 120,
-          })
-        end, vim.tbl_extend('force', base_opts, { desc = 'Show line diagnostics' }))
-
-        -- Additional diagnostic keymaps
-        vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, vim.tbl_extend('force', base_opts, { desc = 'Diagnostic [Q]uickfix' }))
-        vim.keymap.set('n', '<leader>Q', vim.diagnostic.setqflist, vim.tbl_extend('force', base_opts, { desc = 'All Diagnostics [Q]uickfix' }))
+        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, vim.tbl_extend('force', opts, { desc = '[G]oto [D]eclaration' }))
+        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, vim.tbl_extend('force', opts, { desc = '[G]oto [D]efinition' }))
+        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, vim.tbl_extend('force', opts, { desc = '[G]oto [I]mplementation' }))
+        vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = '[G]oto [R]eferences' }))
+        vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, vim.tbl_extend('force', opts, { desc = 'Signature Help' }))
+        vim.keymap.set('n', 'gh', hover_with_border, vim.tbl_extend('force', opts, { desc = '[H]over Documentation' }))
+        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, vim.tbl_extend('force', opts, { desc = 'Code [A]ctions' }))
+        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, vim.tbl_extend('force', opts, { desc = '[R]e[n]ame' }))
         
-        -- Toggle virtual text on/off
-        vim.keymap.set('n', '<leader>td', function()
-          local current_config = vim.diagnostic.config()
-          local is_enabled = current_config.virtual_text ~= false
+        -- K: Focus hover if open, otherwise show diagnostics if present, otherwise show hover
+        vim.keymap.set('n', 'K', function()
+          -- If hover window is open, focus it
+          if focus_hover_window() then
+            return
+          end
           
-          -- This toggle now re-uses the `virtual_text` table from our
-          -- main `diagnostic_config`, which no longer has a format function.
-          vim.diagnostic.config({
-            virtual_text = not is_enabled and diagnostic_config.virtual_text or false,
-          })
+          local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+          local diagnostics = vim.diagnostic.get(bufnr, { lnum = line })
           
-          vim.notify('Virtual text: ' .. (not is_enabled and 'ON' or 'OFF'), vim.log.levels.INFO)
-        end, vim.tbl_extend('force', base_opts, { desc = '[T]oggle [D]iagnostic virtual text' }))
+          if #diagnostics > 0 then
+            vim.diagnostic.open_float(nil, {
+              focus = false,
+              border = 'rounded',
+              source = 'always',
+              scope = 'cursor',
+              header = '',
+              prefix = '',
+            })
+          else
+            hover_with_border()
+          end
+        end, vim.tbl_extend('force', opts, { desc = 'Show Diagnostics or Hover' }))
       end
 
       local lsp_filetypes = {
@@ -352,14 +446,26 @@ return {
         'go', 'gomod', 'gowork', 'gotmpl',
       }
 
+      -- Set keymaps on FileType
       vim.api.nvim_create_autocmd('FileType', {
         pattern = lsp_filetypes,
         group = vim.api.nvim_create_augroup('LspKeymaps', { clear = true }),
         callback = set_lsp_keymaps,
       })
+      
+      -- Also set keymaps on LspAttach for reliability
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('LspAttachKeymaps', { clear = true }),
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if client and vim.tbl_contains(lsp_filetypes, vim.bo[args.buf].filetype) then
+            set_lsp_keymaps()
+          end
+        end,
+      })
 
       -- --------------------------------------------------------------------------
-      -- 5. Direct Rubocop Autocorrect on Save
+      -- Ruby: RuboCop Autocorrect on Save
       -- --------------------------------------------------------------------------
       local RUBOCOP_PATH = '/Users/kamalesh.s/.rbenv/shims/rubocop'
 
@@ -405,21 +511,36 @@ return {
       })
 
       -- --------------------------------------------------------------------------
-      -- 6. Go Auto-format, Organize Imports, and Lint Autofix on Save
+      -- Go: Format and Organize Imports on Save
       -- --------------------------------------------------------------------------
-      
-      -- Go formatting and import organization on save
       vim.api.nvim_create_autocmd('BufWritePre', {
         pattern = { '*.go' },
         group = vim.api.nvim_create_augroup('GoFormatting', { clear = true }),
-        callback = function()
-          -- Format with gopls
-          vim.lsp.buf.format({ timeout_ms = 3000 })
-
+        callback = function(args)
+          local bufnr = args.buf
+          
+          -- Find gopls client
+          local clients = vim.lsp.get_clients({ bufnr = bufnr })
+          local gopls_client = nil
+          for _, client in ipairs(clients) do
+            if client.name == 'gopls' then
+              gopls_client = client
+              break
+            end
+          end
+          
+          if not gopls_client then return end
+          
+          -- Format code
+          vim.lsp.buf.format({
+            timeout_ms = 3000,
+            filter = function(client) return client.name == 'gopls' end
+          })
+          
           -- Organize imports
           local params = vim.lsp.util.make_range_params()
           params.context = { only = { 'source.organizeImports' } }
-          local result = vim.lsp.buf_request_sync(0, 'textDocument/codeAction', params, 3000)
+          local result = vim.lsp.buf_request_sync(bufnr, 'textDocument/codeAction', params, 3000)
           for _, res in pairs(result or {}) do
             for _, r in pairs(res.result or {}) do
               if r.edit then
@@ -429,229 +550,11 @@ return {
           end
         end,
       })
-
-      -- Go lint autofix on save (similar to Ruby RuboCop)
-      local function golangci_lint_exists()
-        return vim.fn.executable('golangci-lint') == 1
-      end
-
-      local function find_golangci_config_for_autofix()
-        local current_dir = vim.fn.expand('%:p:h')
-        local config_files = { '.golangci.yaml', '.golangci.yml' }
-        
-        -- Function to check if config file exists in a directory
-        local function check_config_in_dir(dir)
-          for _, config_file in ipairs(config_files) do
-            local config_path = dir .. '/' .. config_file
-            if vim.fn.filereadable(config_path) == 1 then
-              return config_path
-            end
-          end
-          return nil
-        end
-        
-        -- Check current directory first
-        local config = check_config_in_dir(current_dir)
-        if config then
-          return config
-        end
-        
-        -- Recursively check parent directories up to root
-        local dir = current_dir
-        while dir ~= '/' and dir ~= '' do
-          local parent_dir = vim.fn.fnamemodify(dir, ':h')
-          if parent_dir == dir then -- reached root
-            break
-          end
-          config = check_config_in_dir(parent_dir)
-          if config then
-            return config
-          end
-          dir = parent_dir
-        end
-        
-        return nil -- no config found
-      end
-
-      -- Go lint autofix temporarily disabled
-      --[[
-      -- Track if file was actually written to prevent running on file open
-      local file_write_times = {}
-      
-      vim.api.nvim_create_autocmd('BufWritePre', {
-        pattern = { '*.go' },
-        group = vim.api.nvim_create_augroup('GoLintPreWrite', { clear = true }),
-        callback = function(args)
-          local file_path = vim.api.nvim_buf_get_name(args.buf)
-          if file_path ~= '' then
-            file_write_times[file_path] = vim.fn.getftime(file_path)
-          end
-        end,
-      })
-      --]]
-
-      --[[
-      vim.api.nvim_create_autocmd('BufWritePost', {
-        pattern = { '*.go' },
-        group = vim.api.nvim_create_augroup('GoLinting', { clear = true }),
-        callback = function(args)
-          if not golangci_lint_exists() then
-            vim.notify('golangci-lint not found', vim.log.levels.WARN)
-            return
-          end
-
-          local file_path = vim.api.nvim_buf_get_name(args.buf)
-          if file_path == '' or vim.fn.filereadable(file_path) == 0 then
-            return
-          end
-
-          -- Only run if file was actually written (not just opened)
-          local current_time = vim.fn.getftime(file_path)
-          local previous_time = file_write_times[file_path]
-          if not previous_time or current_time <= previous_time then
-            return
-          end
-
-          -- Find golangci-lint config file
-          local config_file = find_golangci_config_for_autofix()
-          local cmd
-          
-          if config_file then
-            -- Extract directory from config file path
-            local working_dir = vim.fn.fnamemodify(config_file, ':h')
-            -- Get relative path from config directory to file
-            local file_dir = vim.fn.fnamemodify(file_path, ':h')
-            local file_name = vim.fn.fnamemodify(file_path, ':t')
-            
-            -- Calculate relative path from config dir to file
-            local relative_path = vim.fn.fnamemodify(file_path, ':p')
-            local config_dir = vim.fn.fnamemodify(config_file, ':p:h')
-            
-            -- Use vim.fn.fnamemodify to get relative path
-            local relative_file_path = vim.fn.fnamemodify(relative_path, ':p')
-            local relative_file = relative_file_path:gsub('^' .. vim.fn.escape(config_dir, '\\') .. '/', '')
-            
-            cmd = string.format('cd %s && golangci-lint run --fix %s', 
-                               vim.fn.shellescape(working_dir), 
-                               vim.fn.shellescape(relative_file))
-            
-          else
-            -- No config found, run from file's directory
-            local working_dir = vim.fn.fnamemodify(file_path, ':h')
-            local file_name = vim.fn.fnamemodify(file_path, ':t')
-            cmd = string.format('cd %s && golangci-lint run --fix %s', 
-                               vim.fn.shellescape(working_dir), 
-                               vim.fn.shellescape(file_name))
-            
-          end
-
-          local output = vim.fn.system(cmd)
-          local exit_code = vim.v.shell_error
-
-          if exit_code == 0 or exit_code == 1 then
-            vim.cmd('checktime')
-          else
-            vim.notify('golangci-lint failed: ' .. output, vim.log.levels.ERROR)
-          end
-        end,
-      })
-      --]]
-
-      -- Go lint autofix on save (simplified version)
-      local function golangci_lint_exists()
-        return vim.fn.executable('golangci-lint') == 1
-      end
-
-      local function find_golangci_config_for_autofix()
-        local current_dir = vim.fn.expand('%:p:h')
-        local config_files = { '.golangci.yaml', '.golangci.yml' }
-        
-        -- Function to check if config file exists in a directory
-        local function check_config_in_dir(dir)
-          for _, config_file in ipairs(config_files) do
-            local config_path = dir .. '/' .. config_file
-            if vim.fn.filereadable(config_path) == 1 then
-              return config_path
-            end
-          end
-          return nil
-        end
-        
-        -- Check current directory first
-        local config = check_config_in_dir(current_dir)
-        if config then
-          return config
-        end
-        
-        -- Recursively check parent directories up to root
-        local dir = current_dir
-        while dir ~= '/' and dir ~= '' do
-          local parent_dir = vim.fn.fnamemodify(dir, ':h')
-          if parent_dir == dir then -- reached root
-            break
-          end
-          config = check_config_in_dir(parent_dir)
-          if config then
-            return config
-          end
-          dir = parent_dir
-        end
-        
-        return nil -- no config found
-      end
-
-      vim.api.nvim_create_autocmd('BufWritePost', {
-        pattern = { '*.go' },
-        group = vim.api.nvim_create_augroup('GoLinting', { clear = true }),
-        callback = function(args)
-          if not golangci_lint_exists() then
-            return -- silently skip if golangci-lint not available
-          end
-
-          local file_path = vim.api.nvim_buf_get_name(args.buf)
-          if file_path == '' or vim.fn.filereadable(file_path) == 0 then
-            return
-          end
-
-          -- Find golangci-lint config file
-          local config_file = find_golangci_config_for_autofix()
-          local cmd
-          
-          if config_file then
-            -- Extract directory from config file path
-            local working_dir = vim.fn.fnamemodify(config_file, ':h')
-            -- Get relative path from config directory to file
-            local relative_path = vim.fn.fnamemodify(file_path, ':p')
-            local config_dir = vim.fn.fnamemodify(config_file, ':p:h')
-            
-            -- Calculate relative path from config dir to file
-            local relative_file = relative_path:gsub('^' .. vim.fn.escape(config_dir, '\\') .. '/', '')
-            
-            cmd = string.format('cd %s && golangci-lint run --fix %s', 
-                               vim.fn.shellescape(working_dir), 
-                               vim.fn.shellescape(relative_file))
-          else
-            -- No config found, run from file's directory
-            local working_dir = vim.fn.fnamemodify(file_path, ':h')
-            local file_name = vim.fn.fnamemodify(file_path, ':t')
-            cmd = string.format('cd %s && golangci-lint run --fix %s', 
-                               vim.fn.shellescape(working_dir), 
-                               vim.fn.shellescape(file_name))
-          end
-
-          local output = vim.fn.system(cmd)
-          local exit_code = vim.v.shell_error
-
-          if exit_code == 0 or exit_code == 1 then
-            vim.cmd('checktime')
-          end
-        end,
-      })
-    end, -- end of nvim-lspconfig config function
+    end,
   },
 
   -- =======================================================================
-  -- 2. TREE-SITTER
+  -- TREE-SITTER
   -- =======================================================================
   {
     'nvim-treesitter/nvim-treesitter',
@@ -668,13 +571,11 @@ return {
   },
 
   -- =======================================================================
-  -- 3. nvim-cmp and Snippet Plugins (Dependencies are required here)
+  -- COMPLETION & SNIPPETS
   -- =======================================================================
   { 'nvim-lua/plenary.nvim' },
   { 'L3MON4D3/LuaSnip' },
   { 'rafamadriz/friendly-snippets' },
   { 'onsails/lspkind.nvim' },
-
-  -- The nvim-cmp setup file
   { 'hrsh7th/nvim-cmp', lazy = false, config = require('plugins.nvim-cmp') },
 }
