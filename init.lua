@@ -1,12 +1,10 @@
 require("config.lazy")
 
--- Load Neovide GUI configuration (if running in Neovide)
-require("config.neovide").setup()
-
 -- Basic settings
 vim.o.clipboard = 'unnamedplus'
 vim.opt.number = true
 vim.opt.signcolumn = "number"
+vim.opt.laststatus = 0
 
 -- Cursor settings with blinking
 vim.opt.guicursor = table.concat({
@@ -20,6 +18,17 @@ vim.opt.cursorline = true
 
 -- Global border style for floating windows
 vim.g.border_style = "rounded"
+
+-- Transparency
+local highlight_groups = {
+  "Normal", "NormalNC", "LineNr", "Folded", 
+  "NonText", "SpecialKey", "VertSplit", 
+  "SignColumn", "EndOfBuffer", "NormalFloat", "FloatBorder"
+}
+
+for _, group in ipairs(highlight_groups) do
+  vim.api.nvim_set_hl(0, group, { bg = "none", ctermbg = "none" })
+end
 
 -- LSP floating window borders configured in lua/plugins/lsp.lua
 

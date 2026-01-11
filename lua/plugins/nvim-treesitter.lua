@@ -1,62 +1,34 @@
--- File: lua/plugins/nvim-treesitter.lua
+-- Syntax & Parsing Module
+--
+-- Focus: Syntax highlighting, indentation, and text objects via treesitter.
+-- Principles:
+-- 1. Single Responsibility: This file only handles treesitter configuration.
+-- 2. Explicit Configuration: Languages and features are clearly defined.
+
+-- Languages to install parsers for
+local LANGUAGES = {
+  "lua", "vim", "vimdoc",
+  "html", "css", "javascript", "typescript",
+  "json", "markdown", "markdown_inline",
+  "bash", "go", "gomod", "gosum",
+  "ruby", "zig", "rust", "java", "python",
+}
 
 return {
-  'nvim-treesitter/nvim-treesitter',
-  dependencies = {
-    'nvim-treesitter/nvim-treesitter-textobjects',
+  "nvim-treesitter/nvim-treesitter",
+  build = ":TSUpdate",
+  event = { "BufReadPost", "BufNewFile" },
+  opts = {
+    ensure_installed = LANGUAGES,
+    highlight = {
+      enable = true,
+    },
+    indent = {
+      enable = true,
+    },
   },
-  
-  config = function()
-    require('nvim-treesitter.configs').setup {
-      -- UPDATED: List of languages to install and use (includes new languages)
-      ensure_installed = {
-        'lua', 
-        'vim', 
-        'html', 
-        'css', 
-        'javascript', 
-        'typescript', 
-        'json', 
-        'markdown', 
-        'bash',
-        'go',         -- Golang
-        'ruby',       -- Ruby
-        'zig',        -- Zig
-        'rust',       -- Rust
-        'java',       -- Java
-        'python',     -- Python
-      },
-
-      -- Enable Treesitter-based syntax highlighting
-      highlight = {
-        enable = true,
-        disable = function(lang, buf)
-          return lang == 'markdown' and vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == '---'
-        end,
-      },
-      
-      -- Enable Treesitter-based indentation
-      indent = {
-        enable = true,
-      },
-
-      -- Configuration for treesitter-textobjects (advanced motions)
-      textobjects = {
-        select = {
-          enable = true,
-          keymaps = {
-            ['af'] = '@function.outer',
-            ['if'] = '@function.inner',
-            ['ac'] = '@class.outer',
-            ['ic'] = '@class.inner',
-            ['a='] = '@assignment.outer',
-            ['i='] = '@assignment.inner',
-          },
-        },
-        swap = {
-          enable = false,
-        },
-      },
-    }
+  config = function(_, opts)
+    require("nvim-treesitter.configs").setup(opts)
   end,
 }
+

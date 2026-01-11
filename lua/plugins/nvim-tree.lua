@@ -1,98 +1,88 @@
--- File: lua/plugins/nvim-tree.lua
+-- File Explorer Module
+--
+-- Focus: Floating file tree with centered horizontal layout.
+-- Principles:
+-- 1. Single Responsibility: This file only handles file explorer configuration.
+-- 2. Explicit Configuration: Layout dimensions and keymaps are clearly defined.
 
-local function on_attach(bufnr)
-  local api = require('nvim-tree.api')
+-- Layout configuration
+local WINDOW_WIDTH_RATIO = 0.85
+local WINDOW_HEIGHT_RATIO = 0.75
 
-  -- Define the options for the keymap
-  local opts = function(desc)
-    return {
-      desc = "nvim-tree: " .. desc,
-      buffer = bufnr, -- IMPORTANT: Makes the keymap local to the nvim-tree buffer
-      noremap = true,
-      silent = true,
-      nowait = true,
-    }
-  end
+-- get_center_layout calculates centered floating window dimensions.
+local function get_center_layout()
+  local screen_w = vim.opt.columns:get()
+  local screen_h = vim.opt.lines:get() - vim.opt.cmdheight:get()
+  local window_w = math.floor(screen_w * WINDOW_WIDTH_RATIO)
+  local window_h = math.floor(screen_h * WINDOW_HEIGHT_RATIO)
 
-  -- 1. Apply the default NvimTree keymaps
-  -- This ensures other essential nvim-tree mappings (like 'a', 'd', 'r', etc.) still work
-  api.config.mappings.default_on_attach(bufnr)
-
-  -- 2. REMOVE the default buffer-local '-' mapping (api.tree.change_root_to_parent)
-  vim.keymap.del('n', '-', { buffer = bufnr })
-
-  -- 3. Map '-' to CLOSE the tree *buffer-locally* when in the tree.
-  -- You can use 'NvimTreeToggle' or 'NvimTreeClose' here. 'NvimTreeToggle' is versatile.
-  vim.keymap.set('n', '-', '<cmd>NvimTreeToggle<CR>', opts("Toggle/Close Tree"))
+  return {
+    relative = "editor",
+    row = math.floor((screen_h - window_h) / 2),
+    col = math.floor((screen_w - window_w) / 2),
+    width = window_w,
+    height = window_h,
+    border = "rounded",
+  }
 end
 
+-- on_attach configures buffer-local keymaps when tree opens.
+local function on_attach(bufnr)
+  local api = require("nvim-tree.api")
+
+  -- Apply default mappings
+  api.config.mappings.default_on_attach(bufnr)
+
+  -- Custom: Close tree with same key that opens it
+  vim.keymap.set("n", "-", api.tree.close, {
+    desc = "nvim-tree: Close",
+    buffer = bufnr,
+    noremap = true,
+    silent = true,
+  })
+end
 
 return {
-  'nvim-tree/nvim-tree.lua',
-
-  -- We remove the 'cmd' and 'keys' from here, as the keymap is better managed
-  -- by the 'on_attach' function and a standard global toggle key.
-  -- However, if you want a global key to *open* it, keep the keys table.
-  -- Since your goal is to use '-' to *close* it when open, let's keep it simple.
-
-  -- If you want '-' to *always* toggle the tree globally, even when not in the tree buffer:
-  -- The global keymap should be defined here, BUT we need a different key, 
-  -- or we rely solely on the nvim-tree buffer-local one for simplicity. 
-  
-  -- LETS USE THE PLUGINS GLOBAL CONFIG TO DEFINE THE GLOBAL KEYMAP
-  cmd = 'NvimTreeToggle',
-
+  "nvim-tree/nvim-tree.lua",
+  version = "*",
+  dependencies = { "nvim-tree/nvim-web-devicons" },
+  -- Lazy load: Plugin initializes only when this keybinding is used
   keys = {
-    {
-      "-",
-      "<cmd>NvimTreeToggle<CR>",
-      desc = "Toggle NvimTree (Global)"
-    },
+    { "-", "<cmd>NvimTreeToggle<cr>", desc = "Toggle File Explorer" },
   },
-
-  -- Configuration (opts table)
+  init = function()
+    -- Disable netrw to prevent conflicts
+    vim.g.loaded_netrw = 1
+    vim.g.loaded_netrwPlugin = 1
+  end,
   opts = {
-    sort_by = "case_sensitive",
-    hijack_netrw = true,
-    update_focused_file = {
-      enable = true,
-      update_root = true,
+    on_attach = on_attach,
+    view = {
+      signcolumn = "no",
+      number = false,
+      relativenumber = false,
+      float = {
+        enable = true,
+        open_win_config = get_center_layout,
+      },
     },
     renderer = {
-      root_folder_label = ":t",
       icons = {
         show = {
-          file = true,
-          folder = true,
-          folder_arrow = true,
           git = true,
+          diagnostics = true,
         },
       },
     },
-    view = {
-      width = 30,
-      preserve_window_proportions = true,
-      -- Rounded borders for modern aesthetic
-      float = {
-        enable = false,
-        quit_on_focus_loss = true,
-        open_win_config = {
-          border = "rounded",
-        },
+    diagnostics = {
+      enable = true,
+      show_on_dirs = true,
+      icons = {
+        hint = "",
+        info = "",
+        warning = "",
+        error = "",
       },
     },
-    actions = {
-      open_file = {
-        quit_on_open = false,
-      }
-    },
-
-    -- Pass the on_attach function
-    on_attach = on_attach,
   },
-
-  -- Setup function
-  config = function(_, opts)
-    require('nvim-tree').setup(opts)
-  end,
 }
