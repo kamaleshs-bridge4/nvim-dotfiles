@@ -17,6 +17,7 @@ return {
     { "<leader>ff", "<cmd>Telescope find_files hidden=true<cr>", desc = "Find Files" },
     { "<leader>fs", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
     { "<leader>fw", "<cmd>Telescope grep_string<cr>", desc = "Grep Word Under Cursor" },
+    { "<leader>fc", "<cmd>Telescope colorscheme enable_preview=true<cr>", desc = "Colorscheme Preview" },
   },
   config = function()
     local telescope = require("telescope")
@@ -34,7 +35,7 @@ return {
           height = 0.75,
         },
         sorting_strategy = "ascending",
-      },
+      }
     })
 
     -- Load fzf extension for better performance

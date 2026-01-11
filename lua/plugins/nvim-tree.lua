@@ -70,19 +70,12 @@ return {
       icons = {
         show = {
           git = true,
-          diagnostics = true,
+          diagnostics = false,
         },
       },
     },
     diagnostics = {
-      enable = true,
-      show_on_dirs = true,
-      icons = {
-        hint = "",
-        info = "",
-        warning = "",
-        error = "",
-      },
+      enable = false,
     },
   },
 }

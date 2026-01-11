@@ -14,7 +14,7 @@ vim.opt.guicursor = table.concat({
 }, ",")
 
 -- Enhanced cursor line
-vim.opt.cursorline = true
+vim.opt.cursorline = false
 
 -- Global border style for floating windows
 vim.g.border_style = "rounded"
@@ -30,7 +30,11 @@ for _, group in ipairs(highlight_groups) do
   vim.api.nvim_set_hl(0, group, { bg = "none", ctermbg = "none" })
 end
 
--- LSP floating window borders configured in lua/plugins/lsp.lua
+-- Subtle line numbers (barely visible)
+vim.api.nvim_set_hl(0, "LineNr", { fg = "#3b4261", bg = "none" })
+vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#565f89", bg = "none" })
+
+-- LSP diagnostics and floating window borders configured in lua/plugins/lsp.lua
 
 -- Better defaults
 vim.opt.expandtab = true
