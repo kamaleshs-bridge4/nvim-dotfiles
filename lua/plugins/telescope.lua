@@ -1,104 +1,44 @@
--- This configuration snippet uses the 'telescope.nvim' plugin, 
--- which is the standard way to implement 'ff' (Fuzzy Find) in Neovim.
--- It offers seamless integration and better performance than running an external script.
-
--- FUNCTION TO FOCUS THE PREVIEW WINDOW
-local focus_preview = function(prompt_bufnr)
-  local action_state = require("telescope.actions.state")
-  local picker = action_state.get_current_picker(prompt_bufnr)
-  local prompt_win = picker.prompt_win
-  local previewer = picker.previewer
-
-  -- Handle both standard buffer previews and terminal previews
-  local bufnr = previewer.state.bufnr or previewer.state.termopen_bufnr
-  -- Get window ID, falling back to finding it by buffer number for terminal previews
-  local winid = previewer.state.winid or vim.fn.win_findbuf(bufnr)[1]
-
-  -- Set a keymap in the PREVIEW BUFFER to jump back to the prompt window.
-  -- The keymap is set specifically for the preview buffer (`{ buffer = bufnr }`).
-  vim.keymap.set("n", "<Tab>", function()
-    -- Use noautocmd to prevent unnecessary event triggers
-    vim.cmd(string.format("noautocmd lua vim.api.nvim_set_current_win(%s)", prompt_win))
-  end, { buffer = bufnr, silent = true })
-
-  -- Jump the focus to the preview window
-  vim.cmd(string.format("noautocmd lua vim.api.nvim_set_current_win(%s)", winid))
-end
--- END OF FOCUS FUNCTION
+-- Search & Navigation Module
+--
+-- Focus: Fuzzy finding files, text, and symbols with centered preview.
+-- Principles:
+-- 1. Single Responsibility: This file only handles search/navigation configuration.
+-- 2. Explicit Configuration: Layout and keymaps are clearly defined.
 
 return {
-  -- 1. Ensure the 'nvim-telescope/telescope.nvim' plugin is installed and configured
-  {
-    'nvim-telescope/telescope.nvim',
-    dependencies = { 
-      'nvim-lua/plenary.nvim',
-      'nvim-tree/nvim-web-devicons',
-    },
-    
-    -- 2. Define Keymaps
-    keys = {
-      -- Map <leader>ff (The most common mapping) to open the file finder
-      { "<leader>ff", 
-        function() 
-          require('telescope.builtin').find_files({
-            hidden = true, -- Include hidden files
-            no_ignore = false, -- Respect .gitignore
-            follow = true, -- Follow symlinks
-          }) 
-        end, 
-        desc = "Fuzzy Find Files (including hidden)" 
-      },
-      -- Map <leader>fs for project-wide search (like VSCode Cmd+Shift+F)
-      { "<leader>fs",
-        function()
-          require('telescope.builtin').live_grep()
-        end,
-        desc = "Search in Project (live grep)"
-      },
-      -- Map <leader>fw to search for word under cursor
-      { "<leader>fw",
-        function()
-          require('telescope.builtin').grep_string()
-        end,
-        desc = "Find Word under cursor"
-      },
-    },
-    
-    -- 3. Configure Telescope (Basic Setup)
-    config = function()
-      require("telescope").setup {
-        defaults = {
-          -- Rounded borders for modern aesthetic
-          borderchars = { '─', '│', '─', '│', '╭', '╮', '╯', '╰' },
-          -- Customize layout and mappings for a better experience
-          layout_config = {
-              width = 0.9,
-              height = 0.9,
+  "nvim-telescope/telescope.nvim",
+  branch = "0.1.x",
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+    { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+  },
+  -- Lazy load: Plugin initializes only when these keybindings are used
+  keys = {
+    { "<leader>ff", "<cmd>Telescope find_files hidden=true<cr>", desc = "Find Files" },
+    { "<leader>fs", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
+    { "<leader>fw", "<cmd>Telescope grep_string<cr>", desc = "Grep Word Under Cursor" },
+    { "<leader>fc", "<cmd>Telescope colorscheme enable_preview=true<cr>", desc = "Colorscheme Preview" },
+  },
+  config = function()
+    local telescope = require("telescope")
+
+    telescope.setup({
+      defaults = {
+        borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
+        layout_strategy = "horizontal",
+        layout_config = {
+          horizontal = {
+            preview_width = 0.55,
+            prompt_position = "top",
           },
-          -- Solid background (no transparency)
-          winblend = 0,
-          mappings = {
-            n = {
-              -- ADDED: Map <Tab> in normal mode to focus the preview window
-              ["<Tab>"] = focus_preview,
-            },
-            i = {
-              -- Map C-j and C-k for easier navigation in insert mode
-              ["<C-j>"] = "move_selection_next",
-              ["<C-k>"] = "move_selection_previous",
-              ["<C-q>"] = "smart_send_to_qflist", -- Send results to quickfix list
-              -- You may want to unmap <Tab> in insert mode if it conflicts,
-              -- but in the provided setup, <Tab> is not defined in `i` mode 
-              -- so it defaults to Telescope's action (usually move_selection_next or a snippet expansion).
-            },
-          },
+          width = 0.85,
+          height = 0.75,
         },
+        sorting_strategy = "ascending",
       }
-      
-      -- Telescope theming is now handled centrally by catppuccin.lua
-      
-      -- Load telescope extensions if available
-      pcall(require('telescope').load_extension, 'notify')
-    end
-  }
+    })
+
+    -- Load fzf extension for better performance
+    pcall(telescope.load_extension, "fzf")
+  end,
 }
