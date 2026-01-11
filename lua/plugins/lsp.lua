@@ -95,6 +95,21 @@ return {
         capabilities = capabilities,
       })
 
+      vim.lsp.config('eslint', {
+        cmd = { 'vscode-eslint-language-server', '--stdio' },
+        filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' },
+        root_markers = { 'package.json', '.eslintrc', '.eslintrc.js', '.eslintrc.json', '.eslintrc.cjs', '.eslintrc.yaml', '.eslintrc.yml', 'eslint.config.js', '.git' },
+        capabilities = capabilities,
+        settings = {
+          eslint = {
+            validate = 'on',
+            lintTask = {
+              enable = true,
+            },
+          },
+        },
+      })
+
       vim.lsp.config('pyright', {
         cmd = { 'pyright-langserver', '--stdio' },
         filetypes = { 'python' },
@@ -174,7 +189,7 @@ return {
       -- --------------------------------------------------------------------------
       require('mason-lspconfig').setup({
         ensure_installed = {
-          'html', 'cssls', 'jsonls', 'ts_ls',
+          'html', 'cssls', 'jsonls', 'ts_ls', 'eslint',
           'lua_ls', 'pyright', 'bashls', 'rust_analyzer', 'ruby_lsp',
           'gopls', 'golangci_lint_ls',
         },
@@ -422,15 +437,33 @@ return {
             return
           end
           
-          local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-          local diagnostics = vim.diagnostic.get(bufnr, { lnum = line })
+          local cursor = vim.api.nvim_win_get_cursor(0)
+          local line = cursor[1] - 1  -- 0-indexed
+          local col = cursor[2]  -- 0-indexed
           
-          if #diagnostics > 0 then
+          -- Get all diagnostics on the current line
+          local line_diagnostics = vim.diagnostic.get(bufnr, { lnum = line })
+          
+          if #line_diagnostics > 0 then
+            -- Check if cursor is within any diagnostic range
+            local cursor_in_diagnostic = false
+            for _, diag in ipairs(line_diagnostics) do
+              local start_col = diag.col or 0
+              local end_col = diag.end_col or (diag.col or 0)
+              -- Check if cursor is within this diagnostic's range
+              if col >= start_col and col <= end_col then
+                cursor_in_diagnostic = true
+                break
+              end
+            end
+            
+            -- Use 'cursor' scope if cursor is within a diagnostic, otherwise 'line' scope
+            local scope = cursor_in_diagnostic and 'cursor' or 'line'
             vim.diagnostic.open_float(nil, {
               focus = false,
               border = 'rounded',
               source = 'always',
-              scope = 'cursor',
+              scope = scope,
               header = '',
               prefix = '',
             })
