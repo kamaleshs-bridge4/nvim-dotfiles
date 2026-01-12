@@ -151,11 +151,22 @@ return {
           return { buffer = event.buf, noremap = true, silent = true, desc = desc }
         end
 
-        -- Goto navigation
+        -- Goto navigation via Telescope (floating UI instead of bottom pane)
+        local function show_definitions()
+          require("telescope.builtin").lsp_definitions()
+        end
+        local function show_implementations()
+          require("telescope.builtin").lsp_implementations()
+        end
+        local function show_references()
+          require("telescope.builtin").lsp_references()
+        end
+        
         vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts("Goto Declaration"))
-        vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts("Goto Definition"))
-        vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts("Goto Implementation"))
-        vim.keymap.set("n", "gr", vim.lsp.buf.references, opts("Goto References"))
+        vim.keymap.set("n", "gd", show_definitions, opts("Goto Definition"))
+        vim.keymap.set("n", "gi", show_implementations, opts("Goto Implementation"))
+        vim.keymap.set("n", "gr", show_references, opts("Goto References"))
+        vim.keymap.set("n", "<leader>gr", show_references, opts("Goto References"))
 
         -- Documentation and diagnostics
         vim.keymap.set("n", "K", custom_hover, opts("Hover Documentation"))

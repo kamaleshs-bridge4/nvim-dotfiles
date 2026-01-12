@@ -48,7 +48,13 @@ return {
   dependencies = { "nvim-tree/nvim-web-devicons" },
   -- Lazy load: Plugin initializes only when this keybinding is used
   keys = {
-    { "-", "<cmd>NvimTreeToggle<cr>", desc = "Toggle File Explorer" },
+    {
+      "-",
+      function()
+        require("nvim-tree.api").tree.toggle({ find_file = true, focus = true })
+      end,
+      desc = "Toggle File Explorer",
+    },
   },
   init = function()
     -- Disable netrw to prevent conflicts
@@ -57,13 +63,23 @@ return {
   end,
   opts = {
     on_attach = on_attach,
+    update_focused_file = {
+      enable = true,
+      update_root = false,
+    },
     view = {
       signcolumn = "no",
       number = false,
       relativenumber = false,
+      hijack_cursor = true,
       float = {
         enable = true,
         open_win_config = get_center_layout,
+      },
+    },
+    actions = {
+      open_file = {
+        quit_on_open = true,
       },
     },
     renderer = {

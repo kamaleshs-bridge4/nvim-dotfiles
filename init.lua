@@ -19,20 +19,29 @@ vim.opt.cursorline = false
 -- Global border style for floating windows
 vim.g.border_style = "rounded"
 
--- Transparency
-local highlight_groups = {
-  "Normal", "NormalNC", "LineNr", "Folded", 
-  "NonText", "SpecialKey", "VertSplit", 
-  "SignColumn", "EndOfBuffer", "NormalFloat", "FloatBorder"
-}
+-- Transparency (reapplied on colorscheme change)
+local function apply_transparency()
+  local highlight_groups = {
+    "Normal", "NormalNC", "LineNr", "Folded",
+    "NonText", "SpecialKey", "VertSplit",
+    "SignColumn", "EndOfBuffer", "NormalFloat", "FloatBorder"
+  }
 
-for _, group in ipairs(highlight_groups) do
-  vim.api.nvim_set_hl(0, group, { bg = "none", ctermbg = "none" })
+  for _, group in ipairs(highlight_groups) do
+    vim.api.nvim_set_hl(0, group, { bg = "none", ctermbg = "none" })
+  end
+
+  -- Subtle line numbers (barely visible)
+  vim.api.nvim_set_hl(0, "LineNr", { fg = "#3b4261", bg = "none" })
+  vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#565f89", bg = "none" })
 end
 
--- Subtle line numbers (barely visible)
-vim.api.nvim_set_hl(0, "LineNr", { fg = "#3b4261", bg = "none" })
-vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#565f89", bg = "none" })
+-- Apply on startup and after every colorscheme change
+apply_transparency()
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("TransparencyOnThemeChange", { clear = true }),
+  callback = apply_transparency,
+})
 
 -- LSP diagnostics and floating window borders configured in lua/plugins/lsp.lua
 
@@ -53,5 +62,24 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.opt_local.expandtab = false  -- Use actual tabs
     vim.opt_local.tabstop = 8        -- Go standard: tabs are 8 spaces wide
     vim.opt_local.shiftwidth = 8     -- Indent with tabs (8 spaces wide)
+  end,
+})
+
+-- Open Telescope file picker when Neovim is opened with a directory
+vim.api.nvim_create_autocmd('VimEnter', {
+  group = vim.api.nvim_create_augroup('OpenDirectory', { clear = true }),
+  callback = function()
+    -- Check if opened with a directory (no file specified)
+    -- When opening with 'nvim .', the buffer name is empty or matches the directory
+    local bufname = vim.api.nvim_buf_get_name(0)
+    local is_empty_buffer = bufname == "" or bufname == vim.fn.getcwd()
+    
+    if is_empty_buffer and vim.bo.buftype == "" then
+      -- Close the empty buffer and open Telescope file picker
+      vim.api.nvim_buf_delete(0, { force = true })
+      vim.defer_fn(function()
+        require("telescope.builtin").find_files({ hidden = true })
+      end, 10)
+    end
   end,
 })
