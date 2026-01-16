@@ -16,8 +16,10 @@ vim.opt.guicursor = table.concat({
 -- Enhanced cursor line
 vim.opt.cursorline = false
 
--- Global border style for floating windows
-vim.g.border_style = "rounded"
+vim.cmd.colorscheme("catppuccin-frappe")
+
+-- Global border style for floating windows (Neovim 0.11+)
+vim.o.winborder = "rounded"
 
 -- Transparency (reapplied on colorscheme change)
 local function apply_transparency()
@@ -34,6 +36,12 @@ local function apply_transparency()
   -- Subtle line numbers (barely visible)
   vim.api.nvim_set_hl(0, "LineNr", { fg = "#3b4261", bg = "none" })
   vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#565f89", bg = "none" })
+
+  -- Diagnostic underlines: Use undercurl (squiggly) instead of straight underline
+  vim.api.nvim_set_hl(0, "DiagnosticUnderlineError", { undercurl = true, sp = "#db4b4b" })
+  vim.api.nvim_set_hl(0, "DiagnosticUnderlineWarn", { undercurl = true, sp = "#e0af68" })
+  vim.api.nvim_set_hl(0, "DiagnosticUnderlineInfo", { undercurl = true, sp = "#0db9d7" })
+  vim.api.nvim_set_hl(0, "DiagnosticUnderlineHint", { undercurl = true, sp = "#1abc9c" })
 end
 
 -- Apply on startup and after every colorscheme change

@@ -6,13 +6,6 @@
 -- 2. Explicit Configuration: Diagnostics and keymaps are clearly defined.
 -- Note: Uses native vim.lsp.config (Neovim 0.11+)
 
--- Hover documentation configuration
-local HOVER_WIDTH_RATIO = 0.6
-local HOVER_HEIGHT_RATIO = 0.4
-
--- Track hover window
-local hover_win = nil
-
 -- LSP servers to enable (must match mason.lua)
 local LSP_SERVERS = {
   "lua_ls",
@@ -29,90 +22,15 @@ local LSP_SERVERS = {
   "golangci_lint_ls",
 }
 
--- setup_hover_keymaps configures navigation keymaps for hover window.
-local function setup_hover_keymaps(bufnr, win_id)
-  local opts = { buffer = bufnr, noremap = true, silent = true }
-
-  -- Navigation
-  vim.keymap.set("n", "h", "<Left>", opts)
-  vim.keymap.set("n", "l", "<Right>", opts)
-  vim.keymap.set("n", "j", "<Down>", opts)
-  vim.keymap.set("n", "k", "<Up>", opts)
-
-  -- Scrolling
-  vim.keymap.set("n", "<C-f>", "<C-f>", opts)
-  vim.keymap.set("n", "<C-b>", "<C-b>", opts)
-  vim.keymap.set("n", "<C-d>", "<C-d>", opts)
-  vim.keymap.set("n", "<C-u>", "<C-u>", opts)
-
-  -- Close on Esc or q
-  vim.keymap.set("n", "<Esc>", function()
-    vim.api.nvim_win_close(win_id, true)
-    hover_win = nil
-  end, opts)
-  vim.keymap.set("n", "q", function()
-    vim.api.nvim_win_close(win_id, true)
-    hover_win = nil
-  end, opts)
-end
-
--- custom_hover creates a floating window near the cursor for hover documentation.
-local function custom_hover()
-  -- If hover window exists and is valid, focus it
-  if hover_win and vim.api.nvim_win_is_valid(hover_win) then
-    vim.api.nvim_set_current_win(hover_win)
+-- show_diagnostics_or_hover shows diagnostics if present, otherwise hover documentation.
+-- This provides a unified K experience: diagnostics take priority over hover.
+local function show_diagnostics_or_hover()
+  local diagnostics = vim.diagnostic.get(0, { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 })
+  if #diagnostics > 0 then
+    vim.diagnostic.open_float({ border = "rounded", source = true })
     return
   end
-
-  local bufnr = vim.api.nvim_get_current_buf()
-  local params = vim.lsp.util.make_position_params()
-
-  vim.lsp.buf_request(bufnr, "textDocument/hover", params, function(err, result, ctx)
-    if err or not result then
-      return
-    end
-
-    local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
-    
-    -- Remove empty lines from start and end (replaces deprecated trim_empty_lines)
-    while #markdown_lines > 0 and markdown_lines[1] == "" do
-      table.remove(markdown_lines, 1)
-    end
-    while #markdown_lines > 0 and markdown_lines[#markdown_lines] == "" do
-      table.remove(markdown_lines, #markdown_lines)
-    end
-    
-    if vim.tbl_isempty(markdown_lines) then
-      return
-    end
-
-    local screen_w = vim.opt.columns:get()
-    local screen_h = vim.opt.lines:get() - vim.opt.cmdheight:get()
-    local window_w = math.floor(screen_w * HOVER_WIDTH_RATIO)
-    local window_h = math.floor(screen_h * HOVER_HEIGHT_RATIO)
-
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, markdown_lines)
-    vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
-    vim.api.nvim_buf_set_option(buf, "wrap", true)
-
-    -- Position window relative to cursor (below and slightly right)
-    hover_win = vim.api.nvim_open_win(buf, true, {
-      relative = "cursor",
-      row = 1,
-      col = 1,
-      width = window_w,
-      height = window_h,
-      border = "rounded",
-      style = "minimal",
-    })
-
-    -- Enable scrolling in hover window
-    vim.api.nvim_win_set_option(hover_win, "wrap", true)
-    vim.api.nvim_win_set_option(hover_win, "scrolloff", 0)
-
-    setup_hover_keymaps(buf, hover_win)
-  end)
+  vim.lsp.buf.hover()
 end
 
 return {
@@ -143,6 +61,12 @@ return {
       },
     })
 
+    -- Diagnostic underlines: Use undercurl (squiggly) instead of straight underline
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineError", { undercurl = true, sp = "#db4b4b" })
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineWarn", { undercurl = true, sp = "#e0af68" })
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineInfo", { undercurl = true, sp = "#0db9d7" })
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineHint", { undercurl = true, sp = "#1abc9c" })
+
     -- Setup LSP keymaps when LSP attaches to buffer
     vim.api.nvim_create_autocmd("LspAttach", {
       group = vim.api.nvim_create_augroup("LspKeymaps", { clear = true }),
@@ -168,15 +92,24 @@ return {
         vim.keymap.set("n", "gr", show_references, opts("Goto References"))
         vim.keymap.set("n", "<leader>gr", show_references, opts("Goto References"))
 
-        -- Documentation and diagnostics
-        vim.keymap.set("n", "K", custom_hover, opts("Hover Documentation"))
-        vim.keymap.set("n", "<S-K>", custom_hover, opts("Hover Documentation"))
+        -- Documentation and diagnostics (K shows diagnostics if present, else hover)
+        vim.keymap.set("n", "K", show_diagnostics_or_hover, opts("Show Diagnostics or Hover"))
         vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts("Signature Help"))
 
         -- Code actions and rename
         vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts("Code Actions"))
         vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts("Rename"))
       end,
+    })
+
+    -- ESLint: Enable flat config support (eslint.config.mjs)
+    vim.lsp.config("eslint", {
+      settings = {
+        useFlatConfig = true,
+        experimental = {
+          useFlatConfig = true,
+        },
+      },
     })
 
     -- Enable LSP servers using native vim.lsp.config (Neovim 0.11+)
