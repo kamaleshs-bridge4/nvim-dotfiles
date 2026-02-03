@@ -6,8 +6,70 @@
 -- 2. Explicit Configuration: Sources and keymaps are clearly defined.
 
 -- Formatting configuration
-local FORMAT_MAXWIDTH = 30
+local FORMAT_MAXWIDTH = 20
 local FORMAT_ELLIPSIS = "..."
+
+-- Docs scroll mode: remap j/k to scroll documentation while keeping cmp open
+local docs_scroll_mode = false
+local scroll_keymaps = {}
+
+local function exit_docs_scroll_mode()
+  if not docs_scroll_mode then return end
+  docs_scroll_mode = false
+  -- Remove temporary keymaps (including Esc)
+  for _, key in ipairs({ "j", "k", "<C-d>", "<C-u>", "G", "g", "<Esc>" }) do
+    pcall(vim.keymap.del, "i", key, { buffer = 0 })
+  end
+  scroll_keymaps = {}
+  vim.api.nvim_echo({}, false, {}) -- Clear the mode indicator
+end
+
+local function enter_docs_scroll_mode(cmp)
+  if docs_scroll_mode then return end
+  docs_scroll_mode = true
+
+  local buf = vim.api.nvim_get_current_buf()
+
+  -- Scroll down
+  vim.keymap.set("i", "j", function()
+    cmp.mapping.scroll_docs(4)()
+  end, { buffer = buf, nowait = true })
+
+  -- Scroll up
+  vim.keymap.set("i", "k", function()
+    cmp.mapping.scroll_docs(-4)()
+  end, { buffer = buf, nowait = true })
+
+  -- Page down
+  vim.keymap.set("i", "<C-d>", function()
+    cmp.mapping.scroll_docs(12)()
+  end, { buffer = buf, nowait = true })
+
+  -- Page up
+  vim.keymap.set("i", "<C-u>", function()
+    cmp.mapping.scroll_docs(-12)()
+  end, { buffer = buf, nowait = true })
+
+  -- Bottom (G)
+  vim.keymap.set("i", "G", function()
+    cmp.mapping.scroll_docs(999)()
+  end, { buffer = buf, nowait = true })
+
+  -- Top (gg)
+  vim.keymap.set("i", "g", function()
+    cmp.mapping.scroll_docs(-999)()
+  end, { buffer = buf, nowait = true })
+
+  -- Show mode indicator
+  vim.api.nvim_echo({ { "-- DOCS SCROLL (j/k/G/g, Esc to exit) --", "ModeMsg" } }, false, {})
+
+  -- Exit on Esc or when cmp closes
+  vim.keymap.set("i", "<Esc>", function()
+    exit_docs_scroll_mode()
+    cmp.abort()
+  end, { buffer = buf, nowait = true })
+end
+
 
 local function setup_cmp()
   local cmp = require("cmp")
@@ -28,7 +90,7 @@ local function setup_cmp()
     window = {
       completion = cmp.config.window.bordered(),
       documentation = cmp.config.window.bordered({
-        max_width = 100,
+        max_width = 120,
         max_height = 20,
       }),
     },
@@ -45,6 +107,11 @@ local function setup_cmp()
       ["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
       ["<C-y>"] = cmp.mapping.confirm({ select = true }),
       ["<CR>"] = cmp.mapping.confirm({ select = true }),
+      ["K"] = cmp.mapping(function()
+        if cmp.visible() then
+          enter_docs_scroll_mode(cmp)
+        end
+      end, { "i" }),
       ["<Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
           cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
@@ -70,6 +137,9 @@ local function setup_cmp()
       end,
     },
   })
+
+  -- Exit docs scroll mode when completion menu closes
+  cmp.event:on("menu_closed", exit_docs_scroll_mode)
 end
 
 return {
