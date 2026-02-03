@@ -6,7 +6,7 @@
 -- 2. Explicit Configuration: Sources and keymaps are clearly defined.
 
 -- Formatting configuration
-local FORMAT_MAXWIDTH = 50
+local FORMAT_MAXWIDTH = 30
 local FORMAT_ELLIPSIS = "..."
 
 local function setup_cmp()
@@ -25,9 +25,17 @@ local function setup_cmp()
       { name = "buffer" },
       { name = "path" },
     },
+    window = {
+      completion = cmp.config.window.bordered(),
+      documentation = cmp.config.window.bordered({
+        max_width = 100,
+        max_height = 20,
+      }),
+    },
     formatting = {
       format = lspkind.cmp_format({
-        mode = "symbol",
+        mode = "symbol_text",
+        show_labelDetails = true,
         maxwidth = FORMAT_MAXWIDTH,
         ellipsis_char = FORMAT_ELLIPSIS,
       }),
@@ -38,14 +46,18 @@ local function setup_cmp()
       ["<C-y>"] = cmp.mapping.confirm({ select = true }),
       ["<CR>"] = cmp.mapping.confirm({ select = true }),
       ["<Tab>"] = cmp.mapping(function(fallback)
-        if luasnip.expand_or_jumpable() then
+        if cmp.visible() then
+          cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+        elseif luasnip.expand_or_jumpable() then
           luasnip.expand_or_jump()
         else
           fallback()
         end
       end, { "i", "s" }),
       ["<S-Tab>"] = cmp.mapping(function(fallback)
-        if luasnip.jumpable(-1) then
+        if cmp.visible() then
+          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert })
+        elseif luasnip.jumpable(-1) then
           luasnip.jump(-1)
         else
           fallback()

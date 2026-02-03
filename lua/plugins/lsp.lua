@@ -39,6 +39,7 @@ return {
   dependencies = {
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
+    "hrsh7th/cmp-nvim-lsp",
   },
   event = { "BufReadPre", "BufNewFile" },
   config = function()
@@ -159,6 +160,12 @@ return {
           },
         },
       },
+    })
+
+    -- Tell LSP servers that nvim-cmp supports rich completion features
+    -- This enables documentation in completionItem/resolve responses
+    vim.lsp.config("*", {
+      capabilities = require("cmp_nvim_lsp").default_capabilities(),
     })
 
     -- Enable LSP servers using native vim.lsp.config (Neovim 0.11+)
