@@ -1,6 +1,21 @@
-# Neovim Configuration
+<img width="1919" height="1054" alt="image" src="https://github.com/user-attachments/assets/f81c6c51-6e2a-4711-b1b0-a6f4f915de16" /># Neovim Configuration
 
 A modern, minimal Neovim configuration focused on simplicity, readability, and developer productivity. Built with Go coding conventions, SOLID principles, and a clean architecture.
+
+## File Tree
+<img width="1919" height="1054" alt="image" src="https://github.com/user-attachments/assets/762c11df-3202-453f-881a-20fa13e2ded0" />
+
+## File Search
+<img width="1919" height="1054" alt="image" src="https://github.com/user-attachments/assets/115e5d5b-14d5-425f-a03f-0ce42418579e" />
+
+## String Search
+<img width="1919" height="1054" alt="image" src="https://github.com/user-attachments/assets/0bfa441d-edab-408e-a770-31dfafbdfa9d" />
+
+## Integrated Terminal
+<img width="1919" height="1054" alt="image" src="https://github.com/user-attachments/assets/5dce30bd-be5b-4808-a706-088a555db221" />
+
+## Custom Hover Documentation
+<img width="1919" height="1054" alt="image" src="https://github.com/user-attachments/assets/092df52d-918c-4087-ba6b-e619c17bdf49" />
 
 ## ✨ Features
 
