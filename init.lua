@@ -73,6 +73,17 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- Java-specific tab settings (Java uses 4 spaces)
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { 'java' },
+  group = vim.api.nvim_create_augroup('JavaTabSettings', { clear = true }),
+  callback = function()
+    vim.opt_local.expandtab = true   -- Use spaces
+    vim.opt_local.tabstop = 4        -- Java standard: 4 spaces
+    vim.opt_local.shiftwidth = 4
+  end,
+})
+
 -- Open Telescope file picker when Neovim is opened with a directory
 vim.api.nvim_create_autocmd('VimEnter', {
   group = vim.api.nvim_create_augroup('OpenDirectory', { clear = true }),

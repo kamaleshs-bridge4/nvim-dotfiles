@@ -20,6 +20,7 @@ local LSP_SERVERS = {
   "rust_analyzer",
   "gopls",
   "golangci_lint_ls",
+  "jdtls",
 }
 
 -- show_diagnostics_or_hover shows diagnostics if present, otherwise hover documentation.
@@ -108,6 +109,54 @@ return {
         useFlatConfig = true,
         experimental = {
           useFlatConfig = true,
+        },
+      },
+    })
+
+    -- Rust: Use clippy with pedantic/nursery lints, enable all cargo features
+    vim.lsp.config("rust_analyzer", {
+      settings = {
+        ["rust-analyzer"] = {
+          check = {
+            command = "clippy",
+            extraArgs = { "--", "-W", "clippy::pedantic", "-W", "clippy::nursery" },
+          },
+          cargo = {
+            features = "all",
+          },
+        },
+      },
+    })
+
+    -- Java: Configure jdtls for Spring Boot/Gradle projects
+    -- jdtls requires Java 21+ to run, but can analyze Java 11+ projects
+    vim.lsp.config("jdtls", {
+      cmd_env = {
+        JAVA_HOME = "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home",
+      },
+      settings = {
+        java = {
+          format = {
+            settings = {
+              profile = "GoogleStyle",
+            },
+          },
+          completion = {
+            favoriteStaticMembers = {
+              "org.junit.Assert.*",
+              "org.junit.jupiter.api.Assertions.*",
+              "org.mockito.Mockito.*",
+              "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*",
+              "org.springframework.test.web.servlet.result.MockMvcResultMatchers.*",
+            },
+            importOrder = { "java", "javax", "org", "com", "" },
+          },
+          sources = {
+            organizeImports = {
+              starThreshold = 9999,
+              staticStarThreshold = 9999,
+            },
+          },
         },
       },
     })

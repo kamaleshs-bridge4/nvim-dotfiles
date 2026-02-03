@@ -19,6 +19,7 @@ local LSP_SERVERS = {
   "rust_analyzer",
   "gopls",
   "golangci_lint_ls",
+  "jdtls",
 }
 
 return {
